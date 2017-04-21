@@ -204,3 +204,6 @@ xmodmap -e "keycode 52 = bar" # for redefine keys
 
 pacman -S lm_sensors
 pacman -S hddtem
+
+# photo viewer
+sudo pacman -S gthumb
