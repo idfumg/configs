@@ -311,39 +311,70 @@
 
   (global-set-key [(meta ?w)] 'kill-ring-save)
   (global-set-key [(meta ?ц)] 'kill-ring-save)
+
   (global-set-key [(control ?y)] 'yank)
   (global-set-key [(control ?н)] 'yank)
 
+  (global-set-key [(meta ?k)] 'kill-sentence)
+  (global-set-key [(meta ?л)] 'kill-sentence)
+
+  (global-set-key [(control ?k)] 'kill-line)
+  (global-set-key [(control ?л)] 'kill-line)
+
+  (global-set-key [(control meta ?e)] 'end-of-defun)
+  (global-set-key [(control meta ?у)] 'end-of-defun)
+
+  (global-set-key [(control meta ?f)] 'forward-sexp)
+  (global-set-key [(control meta ?а)] 'forward-sexp)
+
+  (global-set-key [(control meta ?b)] 'backward-sexp)
+  (global-set-key [(control meta ?и)] 'backward-sexp)
+
   (global-set-key [(control ?p)] 'previous-line)
   (global-set-key [(control ?з)] 'previous-line)
+
   (global-set-key [(control ?n)] 'next-line)
   (global-set-key [(control ?т)] 'next-line)
+
   (global-set-key [(meta ?p)] 'scroll-down-line)
   (global-set-key [(meta ?з)] 'scroll-down-line)
+
   (global-set-key [(meta ?n)] 'scroll-up-line)
   (global-set-key [(meta ?т)] 'scroll-up-line)
+
   (global-set-key [(control meta ?p)] 'scroll-down-command)
   (global-set-key [(control meta ?з)] 'scroll-down-command)
+
   (global-set-key [(control meta ?n)] 'scroll-up-command)
   (global-set-key [(control meta ?т)] 'scroll-up-command)
+
   (global-set-key [(control ?d)] 'delete-forward-char)
   (global-set-key [(control ?в)] 'delete-forward-char)
+
   (global-set-key [(meta ?d)] 'kill-word)
   (global-set-key [(meta ?в)] 'kill-word)
+
   (global-set-key [(control ?b)] 'backward-char)
   (global-set-key [(control ?и)] 'backward-char)
+
   (global-set-key [(meta ?и)] 'backward-word)
   (global-set-key [(meta ?b)] 'backward-word)
+
   (global-set-key [(control ?f)] 'forward-char)
   (global-set-key [(control ?а)] 'forward-char)
+
   (global-set-key [(meta ?f)] 'forward-word)
   (global-set-key [(meta ?а)] 'forward-word)
+
   (global-set-key [(control ?a)] 'back-to-indentation)
   (global-set-key [(control ?ф)] 'back-to-indentation)
+
   (global-set-key [(control ?e)] 'move-end-of-line)
   (global-set-key [(control ?у)] 'move-end-of-line)
+
   (global-set-key [(meta ?g)] 'goto-line)
   (global-set-key [(meta ?п)] 'goto-line)
+
   (global-set-key [(meta ?-)] 'highlight-symbol-at-point)
   (global-set-key [(control ?=)] 'highlight-symbol-next)
   (global-set-key [(control ?-)] 'highlight-symbol-prev)
