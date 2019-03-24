@@ -139,6 +139,8 @@ export LOCAL_CXX=$CXX_COMPILER
 #export LC_ALL=POSIX
 #export SIRENA_ENV_PARAMS="SIRENA_MAKE_COLOR=1 ECHO='echo -e' BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1"
 export SIRENA_ENV_PARAMS="BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1"
+export SIRENA_TRUNK_PATH="/home/idfumg/work/project/trunk"
+export SIRENA_STABLE_PATH="/home/idfumg/work/project/stable"
 
 ################################################################################
 # ALIASES

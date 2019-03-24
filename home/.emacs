@@ -1,7 +1,9 @@
 ;; (add-to-list 'load-path "~/.emacs.d")
 
 (defun my/setup/packages ()
-  (require 'package)
+  (unless (require 'package)
+    (error "Error! Can't find 'package!"))
+
   (package-initialize)
 
   (let ((repos '(("marmalade" . "http://marmalade-repo.org/packages/")
@@ -154,8 +156,6 @@
                         :background background-color
                         :foreground foreground-color
                         :underline nil)
-
-    (require 's-buffer)
 
     (setq-default
      mode-line-format
@@ -447,10 +447,21 @@
   ;; -I/usr/lib/clang/3.8.1/include
   ;; -I/usr/local/include
 
-  (defun my/sirena/configure ()
-    (require 's-buffer)
-    (require 'dash)
+  (defun my/sirena/open-trunk ()
+    (interactive)
+    (-let [path (getenv "SIRENA_TRUNK_PATH")]
+      (if path
+          (find-file (s-concat path "/src/rail/rail_order.cc"))
+        (error "Error! No sirena trunk located!"))))
 
+  (defun my/sirena/open-stable ()
+    (interactive)
+    (-let [path (getenv "SIRENA_STABLE_PATH")]
+      (if path
+          (find-file (s-concat path "/src/rail/rail_order.cc"))
+        (error "Error! No sirena stable located!"))))
+
+  (defun my/sirena/hook ()
     (defun my/sirena/sirena-svn? (directory)
       (-let [svn-url (shell-command-to-string (s-concat "svn info " directory " --show-item url"))]
         (s-contains? "svn+ssh://svn/SVNroot/sirena" svn-url)))
@@ -545,8 +556,8 @@
                              ("NLS_LANG" . "AMERICAN_CIS.RU8PC866"))]
 
       (when (my/sirena/in-project-now?)
-        (setq-local tooltip-hide-delay 2)
-        (setq-local compilation-ask-about-save nil)
+        (setq tooltip-hide-delay 2)
+        (setq compilation-ask-about-save nil)
         (add-to-list 'compilation-finish-functions 'my/sirena/compilation-finished-hook)
         (global-set-key [(control ?x) ?m] 'my/sirena/rail-make)
         (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'cp866)))
@@ -587,8 +598,7 @@
     (add-to-list 'company-backends 'company-irony 'company-c-headers)
 
     ;; Do not ask which command to run when call `compile` command.
-    (setq compilation-read-command nil)
-    (my/sirena/configure))
+    (setq compilation-read-command nil))
 
   (defun my/c-mode-file-extensions-hook ()
     (add-to-list 'auto-mode-alist '("\\.c\\'" . c++-mode))
@@ -602,6 +612,10 @@
 
   (add-hook 'c-mode-common-hook 'my/c-mode-hook)
   (add-hook 'c++-mode-common-hook 'my/c-mode-hook)
+
+  (add-hook 'c-mode-common-hook 'my/sirena/hook)
+  (add-hook 'c++-mode-common-hook 'my/sirena/hook)
+
   (add-hook 'after-init-hook 'my/c-mode-file-extensions-hook))
 
 (defun my/setup/python ()
@@ -610,11 +624,28 @@
   ;;             (run-python "/usr/bin/python")))
   )
 
-(defun my/setup/browser-program ()
+(defun my/setup/browser ()
   (setq-default browse-url-chromium-program "/usr/bin/chromium"
                 browse-url-firefox-program "/usr/bin/firefox"
                 browse-url-generic-program "/usr/bin/firefox"
-                browse-url-browser-function 'browse-url-generic))
+                browse-url-browser-function 'browse-url-generic)
+
+  (setq-local my/browser/executable "firefox")
+
+  (defun my/browser/exists? (browser)
+    (executable-find browser))
+
+  (defun my/browser/search (search-string)
+    (interactive "MBrowser search: ")
+    (unless (my/browser/exists? my/browser/executable)
+      (error "Error! %s does not exists in exec-path!" my/browser/executable))
+    (shell-command (s-concat my/browser/executable " --search " search-string)))
+
+  (defun my/browser/open (url)
+    (interactive "MBrowser url: ")
+    (unless (my/browser/exists? my/browser/executable)
+      (error "Error! %s does not exists in exec-path!" my/browser/executable))
+    (shell-command (s-concat my/browser/executable " " url))))
 
 (defun my/setup/org ()
   (setq org-src-fontify-natively t)
@@ -828,7 +859,7 @@
   (if (display-graphic-p) (my/setup/theme) (my/setup/theme-console))
   (my/setup/c++)
   (my/setup/python)
-  (my/setup/browser-program)
+  (my/setup/browser)
   (my/setup/org)
   (my/setup/command-history)
   (my/setup/encoding)
@@ -968,5 +999,9 @@
        (timeclock-time-to-seconds start-time))))
 
 ;;(message ".emacs evaluation time: %f" (my/utils/benchmark (main)))
+
+(defun my/buffer/kill-all-other-buffers ()
+  (interactive)
+  (-map 'kill-buffer (-remove-item (current-buffer) (buffer-list))))
 
 (provide '.emacs)
