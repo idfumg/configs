@@ -90,6 +90,9 @@
                     ;; http
                     request
                     json
+
+                    ;; elixir
+                    alchemist
                     )))
 
     (let ((package-list-was-refreshed? nil))
@@ -1037,7 +1040,22 @@
 
       t))
 
-    (global-set-key [(control ?c) ?q] 'my/setup/my-popup-menu))
+  (global-set-key [(control ?c) ?q] 'my/setup/my-popup-menu))
+
+(defun my/setup/elixir ()
+  """
+  https://alchemist.readthedocs.io/en/latest
+  """
+
+  (defun my/setup/elixir-hook ()
+    (require 'alchemist)
+    (alchemist-mode)
+    (add-to-list 'company-backends 'company-alchemist)
+    (global-set-key [(control ?c) ?e] 'alchemist-eval-current-line)
+    (global-set-key [(control ?c) ?r] 'alchemist-eval-region)
+    (global-set-key [(control ?c) ?b] 'alchemist-eval-buffer))
+
+  (add-hook 'elixir-mode-hook 'my/setup/elixir-hook))
 
 (defun main ()
   (my/setup/packages)
@@ -1067,7 +1085,8 @@
   (my/setup/sirena)
   (my/setup/locate)
   (my/setup/lua)
-  (my/setup/popup))
+  (my/setup/popup)
+  (my/setup/elixir))
 
 (main)
 
@@ -1273,3 +1292,17 @@
        (404 . (lambda (&rest _) (message "Got 404.")))))))
 
 (provide '.emacs)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   (quote
+    (request ht web-mode vlf use-package symon solarized-theme smooth-scrolling smart-compile slime s-buffer phi-search-mc neotree monokai-theme mc-extras highlight-symbol hideshow-org helm-projectile helm-gtags helm-company flycheck-pos-tip flycheck-irony engine-mode edit-list diminish company-statistics company-lua company-irony company-c-headers company-anaconda cider ag))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
