@@ -8,7 +8,8 @@
 
   (let ((repos '(("marmalade" . "http://marmalade-repo.org/packages/")
                  ("elpa" . "http://tromey.com/elpa/")
-                 ("melpa" . "http://melpa.milkbox.net/packages/"))))
+                 ("melpa" . "http://melpa.milkbox.net/packages/")
+                 ("melpa-stable" . "https://stable.melpa.org/packages/"))))
     (dolist (repo repos)
       (unless (assoc (car repo) package-archives)
         (add-to-list 'package-archives repo t))))
@@ -74,7 +75,21 @@
                     dash
 
                     ;; System resources monitor in the mode line when idle
-                    ;; symon
+                    symon
+
+                    ;; Lua packages
+                    lua-mode
+                    company-lua
+
+                    ;; hash tables
+                    ht
+
+                    ;; popups
+                    popup
+
+                    ;; http
+                    request
+                    json
                     )))
 
     (let ((package-list-was-refreshed? nil))
@@ -447,19 +462,46 @@
   ;; -I/usr/lib/clang/3.8.1/include
   ;; -I/usr/local/include
 
-  (defun my/sirena/open-trunk ()
-    (interactive)
-    (-let [path (getenv "SIRENA_TRUNK_PATH")]
-      (if path
-          (find-file (s-concat path "/src/rail/rail_order.cc"))
-        (error "Error! No sirena trunk located!"))))
+  (defun my/setup/sirena ()
+    (defun my/sirena/redmine/cut-tasks-names (start end)
+      (interactive "r")
 
-  (defun my/sirena/open-stable ()
-    (interactive)
-    (-let [path (getenv "SIRENA_STABLE_PATH")]
-      (if path
-          (find-file (s-concat path "/src/rail/rail_order.cc"))
-        (error "Error! No sirena stable located!"))))
+      (defun my/sirena/redmine/cut-task-name ()
+        (beginning-of-line)
+        (forward-word)
+        (kill-sexp 3)
+        (end-of-line)
+        (backward-kill-word 7)
+        (delete-trailing-whitespace)
+        (beginning-of-line)
+        (insert "#")
+        (forward-word)
+        (delete-region (point) (progn (skip-chars-forward " \t") (point)))
+        (insert " "))
+
+      (save-excursion
+        (save-restriction
+          (narrow-to-region (or start (point-min)) (or end (point-max)))
+          (indent-region (point-min) (point-max))
+          (goto-char (point-min))
+          (my/sirena/redmine/cut-task-name)
+          (while (and (forward-line) (not (>= (point) (point-max))))
+            (my/sirena/redmine/cut-task-name))
+          (sort-lines nil (point-min) (point-max)))))
+
+    (defun my/sirena/open-trunk ()
+      (interactive)
+      (-let [path (getenv "SIRENA_TRUNK_PATH")]
+        (if path
+            (find-file (s-concat path "/src/rail/rail_order.cc"))
+          (error "Error! No sirena trunk located!"))))
+
+    (defun my/sirena/open-stable ()
+      (interactive)
+      (-let [path (getenv "SIRENA_STABLE_PATH")]
+        (if path
+            (find-file (s-concat path "/src/rail/rail_order.cc"))
+          (error "Error! No sirena stable located!")))))
 
   (defun my/sirena/hook ()
     (defun my/sirena/sirena-svn? (directory)
@@ -630,7 +672,7 @@
                 browse-url-generic-program "/usr/bin/firefox"
                 browse-url-browser-function 'browse-url-generic)
 
-  (setq-local my/browser/executable "firefox")
+  (setq my/browser/executable "firefox")
 
   (defun my/browser/exists? (browser)
     (executable-find browser))
@@ -686,7 +728,8 @@
     (require 'symon)
     (symon-mode))
 
-  (add-hook 'after-init-hook 'my/setup/system-monitor-hook))
+  ;;(add-hook 'after-init-hook 'my/setup/system-monitor-hook)
+  )
 
 (defun my/setup/misc ()
   (setq tab-always-indent 'complete)
@@ -850,6 +893,152 @@
   (setq eshell-prompt-function 'my/setup/eshell-prompt-function)
   (add-hook 'eshell-mode-hook 'my/setup/eshell-hook))
 
+(defun my/setup/locate ()
+  (defun my/locate/sirena-update ()
+    (interactive)
+    (with-temp-buffer
+      ;;(cd "/sudo::/")
+      (message "Running updatedb for locate...")
+      (async-shell-command "updatedb -o /home/idfumg/work/sirena-locate.db -v -l 0 -U /home/idfumg -n .git -n .svn -n externallibs -n alter -n bases -n Downloads -n Documents -n Desktop -n Music -n Pictures -n Templates -n Videos -n Public -n .cache -n .ccache -n .cmake -n .dropbox -n .dropbox-dist -n .mozilla -n .rpmdb -n .subversion -n .thunderbird -n .config")))
+
+  (setq helm-locate-command "locate %s -e -A --regex %s -d /home/idfumg/work/sirena-locate.db"))
+
+(defun my/setup/lua ()
+  (defun my/setup/lua-hook ()
+    (add-to-list 'company-backends 'company-lua)
+    (require 'company-lua)
+    (lua-start-process)
+    (global-set-key [(control ?x) ?e] 'lua-send-current-line)
+    (global-set-key [(control ?x) ?r] 'lua-send-region)
+    (global-set-key [(control ?x) ?a] 'lua-send-buffer))
+
+  (add-hook 'lua-mode-hook 'my/setup/lua-hook))
+
+(defun my/setup/popup ()
+  (require 'popup)
+
+  (defun my/setup/my-popup-menu ()
+    (interactive)
+
+    (-let* ((menu-sirena-rail-make (popup-make-item "rail-make" :value 'SirenaRailMake))
+            (menu-sirena-rail-tests (popup-make-item "rail-tests" :value 'SirenaRailTests))
+            (menu-sirena-rail-rebuild (popup-make-item "rail-rebuild" :value 'SirenaRailRebuild))
+            (menu-sirena-obrzap-make (popup-make-item "obrzap-make" :value 'SirenaObrzapMake))
+            (menu-sirena-rail-test (popup-make-item "rail-test" :value 'SirenaRailTest))
+            (menu-sirena-posauth-tests (popup-make-item "posauth-tests" :value 'SirenaPosAuthTests))
+            (menu-sirena-airimp-tests (popup-make-item "airimp-tests" :value 'SirenaAirimpTests))
+            (menu-sirena-emd-tests (popup-make-item "emd-tests" :value 'SirenaEmdTests))
+            (menu-sirena-posauth-make (popup-make-item "posauth-make" :value 'SirenaPosAuthMake))
+            (menu-sirena-airimp-make (popup-make-item "airimp-make" :value 'SirenaAirimpMake))
+            (menu-sirena-emd-make (popup-make-item "emd-make" :value 'SirenaEmdMake))
+            (menu-sirena-sirenalibs-make (popup-make-item "sirenalibs-make" :value 'SirenaSirenalibsMake))
+            (menu-sirena-serverlib-make (popup-make-item "serverlib-make" :value 'SirenaServerlibMake))
+            (menu-sirena-open-trunk (popup-make-item "open-trunk" :value 'SirenaOpenTrunk))
+            (menu-sirena-open-stable (popup-make-item "open-stable" :value 'SirenaOpenStable))
+            (menu-sirena-redmine-cut-tasks-names (popup-make-item "redmine-cut-tasks-names" :value 'SirenaRedmineTasks))
+
+            (menu-sirena (list "sirena"
+                               menu-sirena-rail-make
+                               menu-sirena-rail-tests
+                               menu-sirena-rail-rebuild
+                               menu-sirena-obrzap-make
+                               menu-sirena-rail-test
+                               menu-sirena-posauth-tests
+                               menu-sirena-airimp-tests
+                               menu-sirena-emd-tests
+                               menu-sirena-posauth-make
+                               menu-sirena-airimp-make
+                               menu-sirena-emd-make
+                               menu-sirena-sirenalibs-make
+                               menu-sirena-serverlib-make
+                               menu-sirena-open-trunk
+                               menu-sirena-open-stable
+                               menu-sirena-redmine-cut-tasks-names))
+
+            (menu-gtags-update (popup-make-item "update" :value 'GtagsUpdate))
+            (menu-gtags-create (popup-make-item "create" :value 'GtagsCreate))
+            (menu-gtags-create-sirena (popup-make-item "create-sirena" :value 'GtagsCreateSirena))
+
+            (menu-gtags (list "gtags"
+                              menu-gtags-update
+                              menu-gtags-create
+                              menu-gtags-create-sirena))
+
+            (menu-browser-search (popup-make-item "search" :value 'BrowserSearch))
+            (menu-browser-open (popup-make-item "open" :value 'BrowserOpen))
+
+            (menu-browser (list "browser"
+                                menu-browser-search
+                                menu-browser-open))
+
+            (menu-system-monitor (popup-make-item "system-monitor" :value 'SystemMonitor))
+            (menu-sudo-open-file (popup-make-item "sudo-open-file" :value 'SudoOpenFile))
+            (menu-kill-all-other-buffers (popup-make-item "kill-all-other-buffers" :value 'KillAllOtherBuffers))
+            (menu-replace-in-file (popup-make-item "replace-in-file" :value 'ReplaceInFile))
+            (menu-replace-in-files (popup-make-item "replace-in-files" :value 'ReplaceInFiles))
+            (menu-recompile-emacs-files (popup-make-item "recompile-emacs-files" :value 'RecompileEmacsFiles))
+            (menu-json-beautify (popup-make-item "json-beautify" :value 'JsonBeautify))
+            (menu-xml-beautify (popup-make-item "xml-beautify" :value 'XmlBeautify))
+            (menu-external-ip (popup-make-item "external-ip" :value 'ExternalIP))
+            (menu-shorten-url (popup-make-item "shorten-url" :value 'ShortenUrl))
+
+            (menu-utils (list "utils"
+                              menu-kill-all-other-buffers
+                              menu-sudo-open-file
+                              menu-system-monitor
+                              menu-replace-in-file
+                              menu-replace-in-files
+                              menu-recompile-emacs-files
+                              menu-json-beautify
+                              menu-xml-beautify
+                              menu-external-ip
+                              menu-shorten-url))
+
+            (result (popup-cascade-menu (list menu-sirena
+                                              menu-gtags
+                                              menu-browser
+                                              menu-utils))))
+
+      (pcase result
+        ('SirenaRailMake (my/sirena/rail-make))
+        ('SirenaRailTests (my/sirena/rail-tests))
+        ('SirenaRailRebuild (my/sirena/rail-rebuild))
+        ('SirenaObrzapMake (my/sirena/obrzap-make))
+        ('SirenaRailTest (my/sirena/rail-test))
+        ('SirenaPosAuthTests (my/sirena/posauth-test))
+        ('SirenaAirimpTests (my/sirena/airimp-test))
+        ('SirenaEmdTests (my/sirena/emd-test))
+        ('SirenaPosAuthMake (my/sirena/posauth-make))
+        ('SirenaAirimpMake (my/sirena/airimp-make))
+        ('SirenaEmdMake (my/sirena/emd-make))
+        ('SirenaSirenalibsMake (my/sirena/sirenalibs-make))
+        ('SirenaServerlibMake (my/sirena/serverlib-make))
+        ('SirenaOpenTrunk (my/sirena/open-trunk))
+        ('SirenaOpenStable (my/sirena/open-stable))
+        ('SirenaRedmineTasks (call-interactively 'my/sirena/redmine/cut-tasks-names))
+
+        ('GtagsUpdate (call-interactively 'my/gtags/update))
+        ('GtagsCreate (call-interactively 'my/gtags/regenerate))
+        ('GtagsCreateSirena (call-interactively 'my/gtags/regenerate-sirena))
+
+        ('BrowserSearch (call-interactively 'my/browser/search))
+        ('BrowserOpen (call-interactively 'my/browser/open))
+
+        ('SystemMonitor (symon-mode (if symon-mode nil t)))
+        ('SudoOpenFile (call-interactively 'my/file/sudo-open-file))
+        ('KillAllOtherBuffers (my/buffer/kill-all-other-buffers))
+        ('ReplaceInFile (call-interactively 'my/file/replace-regexp-in-file))
+        ('ReplaceInFiles (call-interactively 'my/file/replace-regexp-in-files))
+        ('RecompileEmacsFiles 'my/compile/byte-recompile-init-files)
+        ('JsonBeautify (call-interactively 'my/json/beautify))
+        ('XmlBeautify (call-interactively 'my/xml/beautify))
+        ('ExternalIP (my/utils/get-external-ip))
+        ('ShortenUrl (call-interactively 'my/utils/shorten-url)))
+
+      t))
+
+    (global-set-key [(control ?c) ?q] 'my/setup/my-popup-menu))
+
 (defun main ()
   (my/setup/packages)
   (require 's-buffer)
@@ -865,7 +1054,7 @@
   (my/setup/encoding)
   (my/setup/highlight)
   (my/setup/text-mode)
-  ;; (my/setup/system-monitor)
+  (my/setup/system-monitor)
   ;; (my/setup/vlf)
   (my/setup/helm)
   (my/setup/neotree)
@@ -874,7 +1063,11 @@
   (my/setup/multiple-cursors)
   (my/setup/company)
   (my/setup/keys)
-  (my/setup/eshell))
+  (my/setup/eshell)
+  (my/setup/sirena)
+  (my/setup/locate)
+  (my/setup/lua)
+  (my/setup/popup))
 
 (main)
 
@@ -938,6 +1131,10 @@
 
 (defun my/vc/root? (directory)
   (interactive "DChoose directory: ")
+
+  (unless directory
+    (error "Error! Directory is nil!"))
+
   (-let* ((known-vcs '("svn" "git"))
           (expanded-path (expand-file-name directory))
           (expanded-path-tail (if (s-equals? (last expanded-path) "/") "." "/."))
@@ -947,8 +1144,13 @@
 
 (defun my/vc/get-root (directory)
   (interactive "DChoose directory: ")
+
+  (unless directory
+    (error "Error! Directory is nil!"))
+
   (-let ((default-directory-saved default-directory)
          (result nil))
+
     (cd directory)
     (while (and (not (my/vc/root? default-directory))
                 (not (s-equals? default-directory "/")))
@@ -980,7 +1182,7 @@
   (interactive "DChoose directory: \nMFile extensions: \nMFrom: \nMTo: ")
   (-let ((extensions-quoted (regexp-quote extensions))
          (filenames (directory-files directory t extensions)))
-    (-each filenames (lambda (filename) (my/files/replace-regexp-in-file filename from to)))))
+    (-each filenames (lambda (filename) (my/file/replace-regexp-in-file filename from to)))))
 
 (defun my/file/sudo-open-file (filename)
   (interactive "fFilename: ")
@@ -1003,5 +1205,71 @@
 (defun my/buffer/kill-all-other-buffers ()
   (interactive)
   (-map 'kill-buffer (-remove-item (current-buffer) (buffer-list))))
+
+(defun my/utils/get-external-ip ()
+
+  (require 'request)
+  (require 'json)
+
+  (request
+
+   "https://api.myip.com"
+
+   :parser 'json-read
+
+   :success
+   (cl-function
+    (lambda (&key data &allow-other-keys)
+      (-let ((ip (cdr (assoc 'ip data)))
+             (country (cdr (assoc 'country data)))
+             (country-code (cdr (assoc 'cc data))))
+        (message "IP: %S, Country: %S, Country code: %S" ip country country-code)
+        (kill-new ip))))
+
+   :status-code
+   '((400 . (lambda (&rest _) (message "Got 400.")))
+     (404 . (lambda (&rest _) (message "Got 404."))))))
+
+(defun my/utils/shorten-url (param)
+  (interactive "MUrl: ")
+
+  (require 'request)
+  (require 'json)
+  (require 's-buffer)
+
+  (-let [address (s-concat "u=" param)]
+    (request
+
+     "https://www.shorturl.at/url-shortener.php"
+
+     :type "POST"
+
+     :data address
+
+     :headers
+     '(("Cookie" . "__cfduid=d7a6ac158be8ec8661cabd5fd2e79afc21554471179; _ga=GA1.2.1204786437.1554471181; _gid=GA1.2.2009716306.1554471181; _gat=1")
+       ("Content-Type" . "application/x-www-form-urlencoded")
+       ("Referer" . "https://www.shorturl.at/")
+       ("Host" . "www.shorturl.at"))
+
+     :parser
+     (lambda () (buffer-string))
+
+     :success
+     (cl-function
+      (lambda (&key data &allow-other-keys)
+        (with-temp-buffer
+          (insert data)
+          (beginning-of-buffer)
+          (if (string-match "input.+value=\"\\(shorturl.at.+\\) onClick" data)
+              (-let [result (s-concat "http://"
+                                      (buffer-substring-no-properties (+ (match-beginning 1) 1)
+                                                                      (match-end 1)))]
+                (message "%s" result)
+                (kill-new result))))))
+
+     :status-code
+     '((400 . (lambda (&rest _) (message "Got 400.")))
+       (404 . (lambda (&rest _) (message "Got 404.")))))))
 
 (provide '.emacs)
