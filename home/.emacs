@@ -984,6 +984,7 @@
             (menu-xml-beautify (popup-make-item "xml-beautify" :value 'XmlBeautify))
             (menu-external-ip (popup-make-item "external-ip" :value 'ExternalIP))
             (menu-shorten-url (popup-make-item "shorten-url" :value 'ShortenUrl))
+            (menu-filter-buffer-contents (popup-make-item "filter-buffer-contents" :value 'FilterBufferContents))
 
             (menu-utils (list "utils"
                               menu-kill-all-other-buffers
@@ -995,7 +996,8 @@
                               menu-json-beautify
                               menu-xml-beautify
                               menu-external-ip
-                              menu-shorten-url))
+                              menu-shorten-url
+                              menu-filter-buffer-contents))
 
             (result (popup-cascade-menu (list menu-sirena
                                               menu-gtags
@@ -1036,7 +1038,8 @@
         ('JsonBeautify (call-interactively 'my/json/beautify))
         ('XmlBeautify (call-interactively 'my/xml/beautify))
         ('ExternalIP (my/utils/get-external-ip))
-        ('ShortenUrl (call-interactively 'my/utils/shorten-url)))
+        ('ShortenUrl (call-interactively 'my/utils/shorten-url))
+        ('FilterBufferContents (call-interactively 'my/utils/filter-buffer-contents)))
 
       t))
 
@@ -1290,6 +1293,20 @@
      :status-code
      '((400 . (lambda (&rest _) (message "Got 400.")))
        (404 . (lambda (&rest _) (message "Got 404.")))))))
+
+(defun my/utils/filter-buffer-contents (start end pattern)
+  (interactive "r\nMEnter pattern: ")
+  (when pattern
+    (save-restriction
+      (narrow-to-region (or start (point-ming)) (or end (point-max)))
+      (goto-char (point-min))
+      (-let [result ""]
+        (while (not (eobp))
+          (-let [data (s-trim (buffer-substring (point) (progn (forward-line 1) (point))))]
+            (when (s-contains? pattern data)
+              (setq result (-> (-> "\n" (s-append data)) (s-append result))))))
+        (delete-region (point-min) (point-max))
+        (insert result)))))
 
 (provide '.emacs)
 (custom-set-variables
