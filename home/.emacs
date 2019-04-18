@@ -58,7 +58,13 @@
 
                     ;; grep -> ack -> ag
                     ;; https://github.com/ggreer/the_silver_searcher
+                    ;; sudo apt install silversearcher-ag
                     ag
+
+                    ;; sudo add-apt-repository ppa:x4121/ripgrep
+                    ;; sudo apt-get update
+                    ;; sudo apt install ripgrep
+                    ;; rg
 
                     ;; org-mode
                     org
@@ -92,6 +98,7 @@
                     json
 
                     ;; elixir
+                    elixir-mode
                     alchemist
                     )))
 
@@ -808,7 +815,12 @@
     (require 'helm-config)
 
     (setq helm-locate-fuzzy-match t)
-    (helm-mode t))
+    (helm-mode t)
+
+    (advice-add 'helm-ff-filter-candidate-one-by-one
+                :around (lambda (fcn file)
+                          (unless (string-match "\\.*\\.o" file)
+                            (funcall fcn file)))))
 
   (add-hook 'after-init-hook 'my/setup/helm-hook))
 
@@ -1053,7 +1065,7 @@
   (defun my/setup/elixir-hook ()
     (require 'alchemist)
     (alchemist-mode)
-    (add-to-list 'company-backends 'company-alchemist)
+    ;;(add-to-list 'company-backends 'company-alchemist)
     (global-set-key [(control ?c) ?e] 'alchemist-eval-current-line)
     (global-set-key [(control ?c) ?r] 'alchemist-eval-region)
     (global-set-key [(control ?c) ?b] 'alchemist-eval-buffer))
@@ -1316,7 +1328,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (request ht web-mode vlf use-package symon solarized-theme smooth-scrolling smart-compile slime s-buffer phi-search-mc neotree monokai-theme mc-extras highlight-symbol hideshow-org helm-projectile helm-gtags helm-company flycheck-pos-tip flycheck-irony engine-mode edit-list diminish company-statistics company-lua company-irony company-c-headers company-anaconda cider ag))))
+    (rg request ht web-mode vlf use-package symon solarized-theme smooth-scrolling smart-compile slime s-buffer phi-search-mc neotree monokai-theme mc-extras highlight-symbol hideshow-org helm-projectile helm-gtags helm-company flycheck-pos-tip flycheck-irony engine-mode edit-list diminish company-statistics company-lua company-irony company-c-headers company-anaconda cider ag))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
