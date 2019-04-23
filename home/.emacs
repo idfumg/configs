@@ -819,7 +819,7 @@
 
     (advice-add 'helm-ff-filter-candidate-one-by-one
                 :around (lambda (fcn file)
-                          (unless (string-match "\\.*\\.o" file)
+                          (unless (string-match "\\.*\\.o$" file)
                             (funcall fcn file)))))
 
   (add-hook 'after-init-hook 'my/setup/helm-hook))
@@ -1204,7 +1204,7 @@
     (setenv name value)))
 
 (defun my/file/replace-regexp-in-file (filename from to)
-  (interactive "fChoose directory: \nMFrom: \nMTo: ")
+  (interactive "fChoose file: \nMFrom: \nMTo: ")
   (with-temp-buffer
     (insert-file-contents filename)
     (while (re-search-forward from nil t)
@@ -1217,6 +1217,21 @@
   (-let ((extensions-quoted (regexp-quote extensions))
          (filenames (directory-files directory t extensions)))
     (-each filenames (lambda (filename) (my/file/replace-regexp-in-file filename from to)))))
+
+(defun my/file/indent-file (filename)
+  (interactive "fChoose file: ")
+  (with-current-buffer (find-file filename)
+    (unless buffer-read-only
+      (indent-region (point-min) (point-max))
+      (when (buffer-modified-p)
+        (save-buffer))
+    (kill-current-buffer))))
+
+(defun my/file/indent-files (directory extensions)
+  (interactive "DChoose directory: \nMFile extensions: ")
+  (-let ((extensions-quoted (regexp-quote extensions))
+         (filenames (directory-files directory t extensions)))
+    (-each filenames (lambda (filename) (my/file/indent-file filename)))))
 
 (defun my/file/sudo-open-file (filename)
   (interactive "fFilename: ")
