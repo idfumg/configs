@@ -133,16 +133,6 @@ export LOCAL_CXX=$CXX_COMPILER
 #export show_compiler_version='echo | $CC -xc++ -E -v -'
 
 ################################################################################
-# SIRENA
-################################################################################
-
-#export LC_ALL=POSIX
-#export SIRENA_ENV_PARAMS="SIRENA_MAKE_COLOR=1 ECHO='echo -e' BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1"
-export SIRENA_ENV_PARAMS="BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1"
-export SIRENA_TRUNK_PATH="/home/idfumg/work/project/trunk"
-export SIRENA_STABLE_PATH="/home/idfumg/work/project/stable"
-
-################################################################################
 # ALIASES
 ################################################################################
 
@@ -205,112 +195,10 @@ export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
 # export LOCALE=ru_RU.IBM866
 
 ################################################################################
-# DOCKER
+# Sirena helper functions
 ################################################################################
 
-FIREFOX="jess/firefox"
-CHROME="jess/chrome"
-CHROMIUM="jess/chromium"
-TELEGRAM="xorilog/telegram"
-CURL="jess/curl"
-VIRTUALBOX="jess/virtualbox"
-SKYPE="jess/skype"
-THUNDERBIRD="gruen/thunderbird"
-EMACS="silex/emacs"
-GCC="gcc"
-HTTPBIN="jess/httpbin"
-GITEA="gitea/gitea"
-
-IMAGES="$FIREFOX $CHROME $CHROMIUM $TELEGRAM $CURL $VIRTUALBOX $SKYPE $THUNDEBIRD $EMACS $GCC $HTTPBIN $GITEA"
-
-user_group() {
-    echo "$(id -u $USER):$(id -g $USER)"
-}
-
-docker_pull_images() {
-    for image in $IMAGES; do
-        docker pull $image
-    done
-}
-
-docker_clean_containers() {
-    result=$(docker ps -aq -f status=exited)
-    count=$(echo $result | wc -w)
-
-    if [ $count -eq 0 ]; then
-        return 0
-    fi
-
-    echo $result | xargs docker rm
-}
-
-docker_clean_images() {
-    result=$(docker images -q --filter dangling=true)
-    count=$(echo $result | wc -w)
-
-    if [ $count -eq 0 ]; then
-        return 0
-    fi
-
-    echo $result | xargs docker rmi
-}
-
-docker_clean() {
-    docker_clean_containers
-    docker_clean_images
-}
-
-firefox() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --pulseaudio --home --name ${FUNCNAME[0]} -- -u $(user_group) -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads --network host -- $FIREFOX
-}
-
-chrome() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --pulseaudio --home --name ${FUNCNAME[0]} --user=RETAIN -- --no-sandbox -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $CHROME
-}
-
-chromium() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --pulseaudio --home --name ${FUNCNAME[0]} --user=RETAIN -- --no-sandbox -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $CHROMIUM
-}
-
-telegram() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --home --pulseaudio --name ${FUNCNAME[0]} -- -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $TELEGRAM
-}
-
-curl() {
-    docker run --rm --name ${FUNCNAME[0]} -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads $CURL "$@"
-}
-
-virtualbox() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --home --name ${FUNCNAME[0]} -- -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $VIRTUALBOX
-}
-
-skype() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --gpu --home --name ${FUNCNAME[0]} --pulseaudio -- -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $SKYPE
-}
-
-thunderbird() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --home --name ${FUNCNAME[0]} -- -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $THUNDERBIRD
-}
-
-gcc() {
-    docker run --rm -v $PWD:/usr/src/myapp -w /usr/src/myapp $GCC:latest gcc $@
-}
-
-gccs() {
-    for i in {5..9}; do
-        echo "Compiling with gcc-$i"
-        docker run --name ${FUNCNAME[0]}$i --rm -v $PWD:/usr/src/myapp -w /usr/src/myapp $GCC:$i gcc -o "a.out$i" $@
-    done
-}
-
-httpbin() {
-    docker run -d --rm -p 3001:8080 --name ${FUNCNAME[0]} $HTTPBIN
-}
-
-gitea() {
-    docker run --rm --name ${FUNCNAME[0]} -p 3002:3000 $GITEA
-}
-
-emacs() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]} -- -u $(id -u $USER):$(id -g $USER) -- $EMACS
-}
+export SIRENA_BUILD_VARS="BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1"
+export SIRENA_PATH="/home/idfumg/work/project"
+export SIRENA_PATH_TRUNK="$SIRENA_PATH/trunk"
+export SIRENA_PATH_STABLE="$SIRENA_PATH/stable"

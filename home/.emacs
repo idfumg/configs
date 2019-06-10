@@ -605,7 +605,9 @@
                              ("ORACLE_LIB" . "/u01/app/oracle/product/12.1.0/db_1/lib")
                              ("ORACLE_SID" . "orcl")
                              ("ORACLE_INVENTORY" . "/u01/app/oracle/product/12.1.0/db_1/inventory")
-                             ("NLS_LANG" . "AMERICAN_CIS.RU8PC866"))]
+                             ("NLS_LANG" . "AMERICAN_CIS.RU8PC866")
+                             ("SVN_SSH" . "ssh -i /home/idfumg/.ssh/id_rsa -l svn")
+                             ("SVN_BASE" . "svn+ssh://svn/SVNroot/sirena"))]
 
       (when (my/sirena/in-project-now?)
         (setq tooltip-hide-delay 2)
