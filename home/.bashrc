@@ -375,8 +375,8 @@ docker_pull_images() {
     for image in $IMAGES; do
         docker pull $image
     done
+    sudo apt install -y curl screen
     curl -fsSL https://raw.githubusercontent.com/mviereck/x11docker/master/x11docker | sudo bash -s -- --update
-    sudo apt install -y screen
 }
 
 docker_clean_containers() {
