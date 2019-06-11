@@ -372,9 +372,9 @@ user_group() {
 }
 
 docker_pull_images() {
-    for image in $IMAGES; do
-        docker pull $image
-    done
+    # for image in $IMAGES; do
+    #     docker pull $image
+    # done
     curl -fsSL https://raw.githubusercontent.com/mviereck/x11docker/master/x11docker | sudo bash -s -- --update
     sudo apt install -y screen
 }
@@ -458,5 +458,5 @@ gitea() {
 }
 
 emacs() {
-    screen -S ${FUNCNAME[0]}2 -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]}2 -- -u $(id -u $USER):$(id -g $USER) -v $HOME/Dropbox/sync/development:$HOME/development -- $EMACS
+    screen -S ${FUNCNAME[0]} -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]} -- -u $(id -u $USER):$(id -g $USER) -- $EMACS
 }
