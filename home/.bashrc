@@ -195,7 +195,8 @@ sirena_data_postgres() {
 }
 
 sirena_data_oracle() {
-    sirena_exec "echo \"select distinct regexp_substr(name,'^.*\\') from v\\\$datafile;\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+    # sirena_exec "echo \"select distinct regexp_substr(name,'^.*\\') from v\\\$datafile;\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+    sirena_exec "echo \"SELECT  max(a.value) as highest_open_cur, p.value as max_open_cur FROM v\\\$sesstat a, v\\\$statname b, v\\\$parameter p WHERE  a.statistic\\\# = b.statistic\\\#  and b.name = 'opened cursors current' and p.name= 'open_cursors' group by p.value\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
 }
 
 sirena_exec() {
@@ -220,6 +221,7 @@ sirena_stop_postgresql() {
 
 sirena_start_oracle() {
     docker exec -u oracle sirena sh -c ". /root/.bashrc && echo 'startup;' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+    sirena_exec "echo \"ALTER SYSTEM SET open_cursors = 2500 SCOPE=BOTH;\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
 }
 
 sirena_stop_oracle() {
@@ -233,8 +235,8 @@ sirena_start() {
 }
 
 sirena_stop() {
-    # sirena_stop_postgresql
-    # sirena_stop_oracle
+    sirena_stop_postgresql
+    sirena_stop_oracle
     docker stop sirena
 }
 
