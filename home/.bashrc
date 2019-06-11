@@ -184,7 +184,7 @@ export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
 export SIRENA_PATH="$HOME/work"
 export SIRENA_PATH_TRUNK="$SIRENA_PATH/trunk"
 export SIRENA_PATH_STABLE="$SIRENA_PATH/stable"
-export SIRENA_DOCKER_PATH="/sirena_src"
+export SIRENA_PATH_DOCKER="/sirena_src"
 
 cpu_count() {
     grep -c ^processor /proc/cpuinfo
@@ -203,9 +203,10 @@ sirena_exec() {
 }
 
 sirena_start_docker() {
-    local POSTGRESQL_DATA="/var/lib/postgresql/10/main"
+    local POSTGRESQL_DATA=/var/lib/postgresql/10/main
     local ORACLE_DATA="$ORACLE_BASE/oradata"
-    docker run --network host --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_DOCKER_PATH -v $POSTGRESQL_DATA -v $ORACLE_DATA sirena/dev:0.10.0 sh -c "trap : TERM INT; sleep infinity & wait"
+
+    docker run --network host --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_PATH_DOCKER -v $HOME/work/db/oracle:$ORACLE_DATA -v $HOME/work/db/postgresql:$POSTGRESQL_DATA sirena/dev:0.10.0 sh -c "trap : TERM INT; sleep infinity & wait"
 }
 
 sirena_start_postgresql() {
@@ -213,8 +214,16 @@ sirena_start_postgresql() {
     docker exec -u postgres:postgres sirena sh -c "psql -c \"create user system encrypted password 'manager' superuser;\""
 }
 
+sirena_stop_postgresql() {
+    docker exec -u root:root sirena sh -c "service postgresql stop"
+}
+
 sirena_start_oracle() {
     docker exec -u oracle sirena sh -c ". /root/.bashrc && echo 'startup;' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+}
+
+sirena_stop_oracle() {
+    docker exec -u oracle sirena sh -c ". /root/.bashrc && echo 'shutdown;' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
 }
 
 sirena_start() {
@@ -224,7 +233,26 @@ sirena_start() {
 }
 
 sirena_stop() {
+    # sirena_stop_postgresql
+    # sirena_stop_oracle
     docker stop sirena
+}
+
+sirena_init_docker() {
+    local POSTGRESQL_DATA=/var/lib/postgresql/10/main
+    local ORACLE_DATA=$ORACLE_BASE/oradata
+
+    docker run --network host --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_PATH_DOCKER -v $HOME/work/db/oracle:/oracle -v $HOME/work/db/postgresql:/postgres sirena/dev:0.10.0 sh -c "trap : TERM INT; sleep infinity & wait"
+
+    docker exec -u root:root sirena sh -c "chown oracle:oinstall -R /oracle"
+    docker exec -u root:root sirena sh -c "chown postgres:postgres -R /postgres"
+
+    docker exec -u postgres:postgres sirena sh -c "/usr/lib/postgresql/10/bin/initdb -D $POSTGRESQL_DATA"
+
+    docker exec -u postgres:postgres sirena sh -c "cp -r $POSTGRESQL_DATA /postgres"
+    docker exec -u oracle:oinstall sirena sh -c "cp -r $ORACLE_DATA/orcl /oracle"
+
+    sirena_stop
 }
 
 sirena_build() {
@@ -239,7 +267,7 @@ sirena_build() {
     echo ''
     echo \$(\${CC} -xc++ -E -v -)"
 
-    local build_command="$gcc_version && cd $SIRENA_DOCKER_PATH && echo Path: \${PWD} && $SIRENA_BUILD_VARS ./buildFromScratch.sh"
+    local build_command="$gcc_version && cd $SIRENA_PATH_DOCKER && echo Path: \${PWD} && $SIRENA_BUILD_VARS ./buildFromScratch.sh"
 
     local database_login=$1
     local database_password=$2
@@ -269,7 +297,7 @@ sirena_build_stable() {
 }
 
 sirena_make() {
-    sirena_exec "cd $SIRENA_DOCKER_PATH/src && make -sj $(cpu_count) $@"
+    sirena_exec "cd $SIRENA_PATH_DOCKER/src && make -sj $(cpu_count) $@"
 }
 
 sirena_make_obrzap() {
@@ -289,7 +317,7 @@ sirena_make_airimp() {
 }
 
 sirena_clean() {
-    sirena_exec "cd $SIRENA_DOCKER_PATH/src && make -C $@ clean"
+    sirena_exec "cd $SIRENA_PATH_DOCKER/src && make -C $@ clean"
 }
 
 sirena_clean_rail() {
@@ -316,13 +344,22 @@ sirena_rebuild_airimp() {
     sirena_clean_airimp && sirena_make_airimp
 }
 
+sirena_ts() {
+    if [ $# < 1 ]; then
+        echo "Wrong number of arguments!"
+        return 1
+    fi
+
+    sirena_exec "cd $SIRENA_PATH_DOCKER/src && ./tscript.sh $@"
+}
+
 sirena_test() {
     if [ $# -eq 1 ]; then
-        sirena_exec "cd $SIRENA_DOCKER_PATH/src && XP_LIST=$1 make xp-tests"
+        sirena_exec "cd $SIRENA_PATH_DOCKER/src && XP_LIST=$1 make xp-tests"
         return 0
     fi
 
-    sirena_exec "cd $SIRENA_DOCKER_PATH/src && XP_LIST=$1.$2 make xp-tests"
+    sirena_exec "cd $SIRENA_PATH_DOCKER/src && XP_LIST=$1.$2 make xp-tests"
 }
 
 sirena_test_rail() {
@@ -458,5 +495,5 @@ gitea() {
 }
 
 emacs() {
-    screen -S ${FUNCNAME[0]}2 -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]}2 -- -u $(id -u $USER):$(id -g $USER) -v $HOME/Dropbox/sync/development:$HOME/development -- $EMACS
+    screen -S ${FUNCNAME[0]} -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]} -- -u $(id -u $USER):$(id -g $USER) -v $HOME/Dropbox/sync/development:$HOME/development -e SIRENA_PATH_TRUNK -e SIRENA_PATH_STABLE -- $EMACS $@
 }

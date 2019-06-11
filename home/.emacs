@@ -100,6 +100,9 @@
                     ;; elixir
                     elixir-mode
                     alchemist
+
+                    ;; yaml
+                    yaml-mode
                     )))
 
     (let ((package-list-was-refreshed? nil))
@@ -501,14 +504,14 @@
 
     (defun my/sirena/open-trunk ()
       (interactive)
-      (-let [path (getenv "SIRENA_TRUNK_PATH")]
+      (-let [path (getenv "SIRENA_PATH_TRUNK")]
         (if path
             (find-file (s-concat path "/src/rail/rail_order.cc"))
           (error "Error! No sirena trunk located!"))))
 
     (defun my/sirena/open-stable ()
       (interactive)
-      (-let [path (getenv "SIRENA_STABLE_PATH")]
+      (-let [path (getenv "SIRENA_PATH_STABLE")]
         (if path
             (find-file (s-concat path "/src/rail/rail_order.cc"))
           (error "Error! No sirena stable located!")))))
