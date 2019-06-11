@@ -122,55 +122,30 @@ export PLATFORM=m64
 # C++ COMPILER
 ################################################################################
 
-C_COMPILER='gcc'
-CXX_COMPILER='g++'
-
+export C_COMPILER='gcc'
+export CXX_COMPILER='g++'
 export CC=$C_COMPILER
 export CXX=$CXX_COMPILER
 export LOCAL_CC=$C_COMPILER
 export LOCAL_CXX=$CXX_COMPILER
 
-#export show_compiler_version='echo | $CC -xc++ -E -v -'
-
-################################################################################
-# SIRENA
-################################################################################
-
-#export LC_ALL=POSIX
-#export SIRENA_ENV_PARAMS="SIRENA_MAKE_COLOR=1 ECHO='echo -e' BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1"
-export SIRENA_ENV_PARAMS="BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1"
-export SIRENA_TRUNK_PATH="/home/idfumg/work/project/trunk"
-export SIRENA_STABLE_PATH="/home/idfumg/work/project/stable"
-
-################################################################################
-# ALIASES
-################################################################################
-
-alias sirena_build='cc_version.sh && BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1 ./buildFromScratch.sh'
-alias obrzap_make='BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1 make -sj8 obrzap'
-alias rail_make='BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1 make -sj8 rail'
-alias rail_clean='BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1 make -C rail clean'
-alias rail_test='XP_LIST=rail make xp-tests'
-alias rail_rebuild='rail_clean && rail_make && obrzap_make && rail_test'
-alias pos_make='BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1 make -sj8 pos_auth'
-alias pos_clean='BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1 make -C pos_auth clean'
-alias pos_test='XP_LIST=pos_auth make xp-tests'
-alias pos_rebuild='pos_clean && pos_make && obrzap_make && pos_test'
-alias ..='cd ..'
-alias cds='cd /home/idfumg/work/project/trunk/src'
-alias rail='cd /home/idfumg/work/project/trunk/src/rail'
-alias sqw='rlwrap sqlplus stable/stable'
-alias sqa='rlwrap sqlplus trunk/trunk'
-alias e='emacs -nw'
-alias grep='LC_ALL=POSIX grep --color=auto'
-alias svn_diff='svn diff --diff-cmd=colordiff | iconv -f ibm866 -t utf-8'
-alias diff='colordiff'
+gcc_version() {
+    echo '****************** ' $CC ' configuration **********************\n'
+    echo | $CC -xc++ -E -v -
+    echo '\nOPTIONS:'
+    echo 'ENABLE_GLIBCXX_DEBUG='${ENABLE_GLIBCXX_DEBUG}
+    echo 'CC='${CC}
+    echo 'CXX='${CXX}
+    echo 'LOCAL_CC='${LOCAL_CC}
+    echo 'LOCAL_CXX='${LOCAL_CXX}
+    echo '\n*************************************************************\n'
+}
 
 ################################################################################
 # SSH
 ################################################################################
 
-export SVN_SSH='ssh -i /home/idfumg/.ssh/id_rsa -l svn'
+export SVN_SSH='ssh -i $HOME/.ssh/id_rsa -l svn'
 export SVN_BASE='svn+ssh://svn/SVNroot/sirena'
 
 ################################################################################
@@ -178,10 +153,9 @@ export SVN_BASE='svn+ssh://svn/SVNroot/sirena'
 ################################################################################
 
 export ORACLE_BASE=/u01/app/oracle
-export ORACLE_HOME=/u01/app/oracle/product/12.1.0/db_1
-export ORACLE_SID=orcl1
-export ORACLE_INVENTORY=/u01/app/oracle/product/12.1.0/db_1/inventory
-export ORACLE_BASE ORACLE_SID ORACLE_HOME
+export ORACLE_HOME=$ORACLE_BASE/product/12.2.0/db_1
+export ORACLE_SID=orcl
+export ORACLE_INVENTORY=$ORACLE_HOME/inventory
 export PATH=$ORACLE_HOME/bin:$PATH
 export LD_LIBRARY_PATH=$ORACLE_HOME/lib:$LD_LIBRARY_PATH
 export NLS_LANG=AMERICAN_CIS.RU8PC866
@@ -190,12 +164,11 @@ export NLS_LANG=AMERICAN_CIS.RU8PC866
 # MISC
 ################################################################################
 
+export LC_ALL=POSIX
 export EDITOR=nano
 export VISUAL=nano
 export PATH=$HOME/bin:$PATH
 export TERM=screen-256color
-
-# for terminal tab caption
 export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
 
 # export PLATFORM=m64
@@ -203,6 +176,177 @@ export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
 # export LANG=en_US.UTF-8
 # export LANG=ru_RU.utf8
 # export LOCALE=ru_RU.IBM866
+
+################################################################################
+# Sirena helper functions
+################################################################################
+
+export SIRENA_PATH="$HOME/work"
+export SIRENA_PATH_TRUNK="$SIRENA_PATH/trunk"
+export SIRENA_PATH_STABLE="$SIRENA_PATH/stable"
+export SIRENA_DOCKER_PATH="/sirena_src"
+
+cpu_count() {
+    grep -c ^processor /proc/cpuinfo
+}
+
+sirena_data_postgres() {
+    docker exec -u postgres:postgres sirena sh -c "psql -c \"SHOW data_directory\""
+}
+
+sirena_data_oracle() {
+    sirena_exec "echo \"select distinct regexp_substr(name,'^.*\\') from v\\\$datafile;\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+}
+
+sirena_exec() {
+    docker exec -u $(id -u $USER):$(id -g $USER) sirena sh -c ". /root/.bashrc && $@"
+}
+
+sirena_start_docker() {
+    local POSTGRESQL_DATA="/var/lib/postgresql/10/main"
+    local ORACLE_DATA="$ORACLE_BASE/oradata"
+    docker run --network host --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_DOCKER_PATH -v $POSTGRESQL_DATA -v $ORACLE_DATA sirena/dev:0.10.0 sh -c "trap : TERM INT; sleep infinity & wait"
+}
+
+sirena_start_postgresql() {
+    docker exec -u root:root sirena sh -c "service postgresql start"
+    docker exec -u postgres:postgres sirena sh -c "psql -c \"create user system encrypted password 'manager' superuser;\""
+}
+
+sirena_start_oracle() {
+    docker exec -u oracle sirena sh -c ". /root/.bashrc && echo 'startup;' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+}
+
+sirena_start() {
+    sirena_start_docker
+    sirena_start_postgresql
+    sirena_start_oracle
+}
+
+sirena_stop() {
+    docker stop sirena
+}
+
+sirena_build() {
+    local SIRENA_BUILD_VARS="BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1 LANG=en_US.UTF-8 LANGUAGE=en_US"
+
+    local gcc_version="
+    echo CC=\${CC}
+    echo CXX=\${CXX}
+    echo LOCAL_CC=\${LOCAL_CC}
+    echo LOCAL_CXX=\${LOCAL_CXX}
+    echo ''
+    echo ''
+    echo \$(\${CC} -xc++ -E -v -)"
+
+    local build_command="$gcc_version && cd $SIRENA_DOCKER_PATH && echo Path: \${PWD} && $SIRENA_BUILD_VARS ./buildFromScratch.sh"
+
+    local database_login=$1
+    local database_password=$2
+
+    if [ -z $database_login ] && [ -z $database_password ]; then
+        sirena_exec "$build_command $@"
+        return 0
+    fi
+
+    if [ $# -eq 2 ] || [ $# -eq 3 ]; then
+        if [ -n $database_login ] && [ -n $database_password ]; then
+            sirena_exec "$build_command $database_login/$database_password $3"
+            return 0
+        fi
+    fi
+
+    echo "Error! Wrong function parameters!"
+    return 1
+}
+
+sirena_build_trunk() {
+    sirena_build trunk trunk
+}
+
+sirena_build_stable() {
+    sirena_build stable stable
+}
+
+sirena_make() {
+    sirena_exec "cd $SIRENA_DOCKER_PATH/src && make -sj $(cpu_count) $@"
+}
+
+sirena_make_obrzap() {
+    sirena_make "obrzap"
+}
+
+sirena_make_rail() {
+    sirena_make "rail"
+}
+
+sirena_make_posauth() {
+    sirena_make "pos_auth"
+}
+
+sirena_make_airimp() {
+    sirena_make "airimp"
+}
+
+sirena_clean() {
+    sirena_exec "cd $SIRENA_DOCKER_PATH/src && make -C $@ clean"
+}
+
+sirena_clean_rail() {
+    sirena_clean "rail"
+}
+
+sirena_clean_posauth() {
+    sirena_clean "pos_auth"
+}
+
+sirena_clean_airimp() {
+    sirena_clean "airimp"
+}
+
+sirena_rebuild_rail() {
+    sirena_clean_rail && sirena_make_rail
+}
+
+sirena_rebuild_posauth() {
+    sirena_clean_posauth && sirena_make_posauth
+}
+
+sirena_rebuild_airimp() {
+    sirena_clean_airimp && sirena_make_airimp
+}
+
+sirena_test() {
+    if [ $# -eq 1 ]; then
+        sirena_exec "cd $SIRENA_DOCKER_PATH/src && XP_LIST=$1 make xp-tests"
+        return 0
+    fi
+
+    sirena_exec "cd $SIRENA_DOCKER_PATH/src && XP_LIST=$1.$2 make xp-tests"
+}
+
+sirena_test_rail() {
+    sirena_test "rail" $@
+}
+
+sirena_test_posauth() {
+    sirena_test "pos_auth" $@
+}
+
+sirena_test_airimp() {
+    sirena_test "airimp" $@
+}
+
+# docker exec -e LC_CTYPE="en_US.UTF-8" -e LANG="en_US.UTF-8" -e LANGUAGE="en_US:en" -e LC_ALL="en_US.UTF-8" -u root:root sirena sh -c "locale-gen en_US"
+# docker exec -e LC_CTYPE="en_US.UTF-8" -e LANG="en_US.UTF-8" -e LANGUAGE="en_US:en" -e LC_ALL="en_US.UTF-8" -u root:root sirena sh -c "locale-gen en_US.UTF-8"
+# docker exec -e LC_CTYPE="en_US.UTF-8" -e LANG="en_US.UTF-8" -e LANGUAGE="en_US:en" -e LC_ALL="en_US.UTF-8" -u postgres:postgres sirena sh -c "cat /etc/locale.conf"
+# LC_ALL=en_US.UTF-8
+# LC_CTYPE=en_US.UTF-8
+# LANG=en_US.UTF-8
+# docker exec -e LC_CTYPE="en_US.UTF-8" -e LANG="en_US.UTF-8" -e LANGUAGE="en_US:en" -e LC_ALL="en_US.UTF-8" -u postgres:postgres sirena sh -c "cat /etc/locale.gen" | grep en_US
+# en_US ISO-8859-1
+# # en_US.ISO-8859-15 ISO-8859-15
+# en_US.UTF-8 UTF-8
 
 ################################################################################
 # DOCKER
