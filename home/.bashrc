@@ -178,6 +178,12 @@ export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
 # export LOCALE=ru_RU.IBM866
 
 ################################################################################
+# Aliases
+################################################################################
+
+alias ..="cd .."
+
+################################################################################
 # Sirena helper functions
 ################################################################################
 
@@ -497,5 +503,103 @@ gitea() {
 }
 
 emacs() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]} -- -u $(id -u $USER):$(id -g $USER) -v $HOME/Dropbox/sync/development:$HOME/development -e SIRENA_PATH_TRUNK -e SIRENA_PATH_STABLE -- $EMACS $@
+    screen -S ${FUNCNAME[0]} -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]} -- -u $(id -u $USER):$(id -g $USER) -e SIRENA_PATH_TRUNK -e SIRENA_PATH_STABLE -- $EMACS $@
+}
+
+################################################################################
+# GITHUB
+################################################################################
+
+MY_CONFIGS="https://github.com/idfumg/MyConfigs.git"
+ELIXIR_SYNOPSIS="https://github.com/idfumg/ElixirSynopsis.git"
+LUA_SYNOPSIS="https://github.com/idfumg/LuaSynopsis.git"
+QT_SYNOPSIS="https://github.com/idfumg/QtSynopsis.git"
+PYTHON_SYNOPSIS="https://github.com/idfumg/PythonSynopsis.git"
+EMACS_SYNOPSIS="https://github.com/idfumg/EmacsSynopsis.git"
+VK_PYTHON_STATS="https://github.com/idfumg/VkPythonStats.git"
+ASM_LEARNING="https://github.com/idfumg/AsmLearning.git"
+OPENSSL_GOST_WRAPPER="https://github.com/idfumg/OpensslGostWrapper.git"
+SAILFISH_SECRETS_APIE_XAMPLE="https://github.com/idfumg/SailfishSecretsApiExample.git"
+SAILFISH_SECRETS_GOST_PLUGIN="https://github.com/idfumg/sailfishsecrets-gost-plugin.git"
+SYSTEM_CALLS_LEARNING="https://github.com/idfumg/SystemCallsLearning.git"
+CPP_UTILS="https://github.com/idfumg/CppUtils.git"
+XML11="https://github.com/idfumg/xml11.git"
+PLANETS_OF_THE_UNIVERSE="https://github.com/idfumg/planets-of-the-universe.git"
+CREQUESTS="https://github.com/idfumg/crequests.git"
+STEVENS_SYNOPSIS="https://github.com/idfumg/StevensSynopsis.git"
+PNR_PARSE="https://github.com/idfumg/PnrParse.git"
+PATTERNS_SYNOPSIS="https://github.com/idfumg/PatternsSynopsis.git"
+PERSONAL_BLOG="https://github.com/idfumg/PersonalBlog.git"
+PERSONAL_PAGE="https://github.com/idfumg/PersonalPage.git"
+ALGORITHMS_SYNOPSIS="https://github.com/idfumg/AlgorithmsSynopsis.git"
+GULP_TEMPLATE="https://github.com/idfumg/GulpTemplate.git"
+MONITOR_WEB="https://github.com/idfumg/MonitorWeb.git"
+JAVASCRIPT_SYNOPSIS="https://github.com/idfumg/JavaScriptSynopsis.git"
+MP11="https://github.com/idfumg/mp11.git"
+CPP_PROXY_CONTAINERS="https://github.com/idfumg/CppProxyContainers.git"
+SERIES_FINDER_SELENIUM="https://github.com/idfumg/series-finder-selenium.git"
+VK_MUSIC_SELENIUM_BS="https://github.com/idfumg/vk-music-selenium-bs.git"
+VK_MUSIC="https://github.com/idfumg/vk-music.git"
+FLASK_OIDC="https://github.com/idfumg/flask-oidc.git"
+EMACS_D="https://github.com/idfumg/emacs.d.git"
+FLASK_AUTOINDEX="https://github.com/idfumg/flask-autoindex.git"
+FLASK_BCRYPT_USAGE="https://github.com/idfumg/flask-bcrypt-usage.git"
+FLASK_WTF_USAGE="https://github.com/idfumg/flask-wtf-usage.git"
+FLASK_LOGIN_USAGE="https://github.com/idfumg/flask-login-usage.git"
+FLASK_DEFAULT_TREE="https://github.com/idfumg/flask-default-tree.git"
+SQLALCHEMY_TUTORIAL_EXAMPLES="https://github.com/idfumg/SQLAlchemy_tutorial_examples.git"
+
+GITHUB_REPOS="
+$MY_CONFIGS
+$ELIXIR_SYNOPSIS
+$LUA_SYNOPSIS
+$QT_SYNOPSIS
+$PYTHON_SYNOPSIS
+$EMACS_SYNOPSIS
+$VK_PYTHON_STATS
+$ASM_LEARNING
+$OPENSSL_GOST_WRAPPER
+$SAILFISH_SECRETS_APIE_XAMPLE
+$SAILFISH_SECRETS_GOST_PLUGIN
+$SYSTEM_CALLS_LEARNING
+$CPP_UTILS
+$XML11
+$PLANETS_OF_THE_UNIVERSE
+$CREQUESTS
+$STEVENS_SYNOPSIS
+$PNR_PARSE
+$PATTERNS_SYNOPSIS
+$PERSONAL_BLOG
+$PERSONAL_PAGE
+$ALGORITHMS_SYNOPSIS
+$GULP_TEMPLATE
+$MONITOR_WEB
+$JAVASCRIPT_SYNOPSIS
+$MP11
+$CPP_PROXY_CONTAINERS
+$SERIES_FINDER_SELENIUM
+$VK_MUSIC_SELENIUM_BS
+$VK_MUSIC
+$FLASK_OIDC
+$EMACS_D
+$FLASK_AUTOINDEX
+$FLASK_BCRYPT_USAGE
+$FLASK_WTF_USAGE
+$FLASK_LOGIN_USAGE
+$FLASK_DEFAULT_TREE
+$SQLALCHEMY_TUTORIAL_EXAMPLES"
+
+github_pull() {
+    local GITHUB_DIR=$HOME/1/github
+
+    echo "Copying repositories into $GITHUB_DIR ..." && echo
+    mkdir -p $GITHUB_DIR && cd $GITHUB_DIR
+
+    for repo in $GITHUB_REPOS; do
+        echo "Copying $repo"
+        git clone -q $repo
+    done
+
+    cd -
+    echo && echo "Done"
 }
