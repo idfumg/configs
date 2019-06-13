@@ -353,12 +353,22 @@ sirena_rebuild_airimp() {
 }
 
 sirena_ts() {
-    if [ $# < 1 ]; then
-        echo "Wrong number of arguments!"
-        return 1
+    local FILENAME=$1
+    local ARGS=${@:2}
+
+    if [ $# -eq 1 ]; then
+        sirena_exec "cd $SIRENA_PATH_DOCKER/src && ./tscript.sh $FILENAME"
+        return 0
     fi
 
-    sirena_exec "cd $SIRENA_PATH_DOCKER/src && ./tscript.sh $@"
+    if [ $# -gt 1 ]; then
+        for num in $ARGS; do
+            sirena_exec "cd $SIRENA_PATH_DOCKER/src && ./tscript.sh $FILENAME $num"
+        done
+        return 0
+    fi
+
+    echo "Usage: sirena_ts file_name.ts [test_number1 test_number2 ...]"
 }
 
 sirena_test() {
