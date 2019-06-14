@@ -690,3 +690,18 @@ utils_backup_to_dropbox() {
 
     utils_backup $HOME/Dropbox/sync/development $1
 }
+
+utils_restore() {
+    tar xfzv $1
+}
+
+utils_restore_from_dropbox() {
+    if [ ! $# -eq 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} filename"
+        return 1
+    fi
+
+    cd $HOME/1
+    utils_restore $HOME/Dropbox/sync/development/$1
+    cd -
+}
