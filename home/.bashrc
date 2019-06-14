@@ -196,54 +196,88 @@ cpu_count() {
     grep -c ^processor /proc/cpuinfo
 }
 
-sirena_data_postgres() {
-    docker exec -u postgres:postgres sirena sh -c "psql -c \"SHOW data_directory\""
-}
-
-sirena_data_oracle() {
-    # sirena_exec "echo \"select distinct regexp_substr(name,'^.*\\') from v\\\$datafile;\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
-    sirena_exec "echo \"SELECT  max(a.value) as highest_open_cur, p.value as max_open_cur FROM v\\\$sesstat a, v\\\$statname b, v\\\$parameter p WHERE  a.statistic\\\# = b.statistic\\\#  and b.name = 'opened cursors current' and p.name= 'open_cursors' group by p.value\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
-}
-
 sirena_exec() {
     docker exec -u $(id -u $USER):$(id -g $USER) sirena sh -c ". /root/.bashrc && $@"
 }
 
+sirena_exec_user() {
+    local ARGS=${@:2}
+    docker exec -u $1 sirena sh -c ". /root/.bashrc && $ARGS"
+}
+
+sirena_exec_user_it() {
+    local ARGS=${@:2}
+    docker exec -u $1 -it sirena sh -c ". /root/.bashrc && $ARGS"
+}
+
+sirena_cds() {
+    cd $SIRENA_PATH_TRUNK/src
+}
+
+sirena_cdw() {
+    cd $SIRENA_PATH_STABLE/src
+}
+
+sirena_sqv() {
+    sirena_exec_user_it oracle "sqlplus trunk/trunk"
+}
+
+sirena_sqw() {
+    sirena_exec_user_it oracle "sqlplus stable/stable"
+}
+
+sirena_data_postgres() {
+    sirena_exec_user postgres "psql -c \"SHOW data_directory\""
+}
+
+sirena_data_oracle() {
+    sirena_exec_user oracle "echo \"select distinct regexp_substr(name,'^.*\\') from v\\\$datafile;\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+}
+
 sirena_start_docker() {
     local POSTGRESQL_DATA=/var/lib/postgresql/10/main
-    local ORACLE_DATA="$ORACLE_BASE/oradata"
+    local ORACLE_DATA=$ORACLE_BASE/oradata
+    local STORAGE="storage.komtex:10.1.90.152"
+    local SVN="svn.komtex:10.1.90.222"
 
-    docker run --network host --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_PATH_DOCKER -v $HOME/work/db/oracle:$ORACLE_DATA -v $HOME/work/db/postgresql:$POSTGRESQL_DATA sirena/dev:0.10.0 sh -c "trap : TERM INT; sleep infinity & wait"
+    docker run --add-host $STORAGE --add-host $SVN --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_PATH_DOCKER -v $HOME/work/db/oracle:$ORACLE_DATA -v $HOME/work/db/postgresql:$POSTGRESQL_DATA sirena/dev:0.10.0 sh -c "trap : TERM INT; sleep infinity & wait"
+}
+
+sirena_stop_docker() {
+    docker stop sirena
 }
 
 sirena_start_postgresql() {
-    docker exec -u root:root sirena sh -c "service postgresql start"
-    docker exec -u postgres:postgres sirena sh -c "psql -c \"create user system encrypted password 'manager' superuser;\""
+    sirena_exec_user root:root "service postgresql start"
+    sirena_exec_user postgres:postgres "psql -c \"create user system encrypted password 'manager' superuser;\""
 }
 
 sirena_stop_postgresql() {
-    docker exec -u root:root sirena sh -c "service postgresql stop"
+    sirena_exec_user root:root "service postgresql stop"
 }
 
 sirena_start_oracle() {
-    docker exec -u oracle sirena sh -c ". /root/.bashrc && echo 'startup;' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
-    sirena_exec "echo \"ALTER SYSTEM SET open_cursors = 2500 SCOPE=BOTH;\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+    sirena_exec_user oracle "echo 'startup;' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+    sirena_exec_user oracle "echo \"ALTER SYSTEM SET open_cursors = 2500 SCOPE=BOTH;\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
 }
 
 sirena_stop_oracle() {
-    docker exec -u oracle sirena sh -c ". /root/.bashrc && echo 'shutdown;' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+    sirena_exec_user oracle "echo 'shutdown;' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
 }
 
 sirena_start() {
+    if [ ! -e "$PWD/buildFromScratch.sh" ]; then
+        echo "Error! It's not a project root directory!"
+        return 1
+    fi
+
     sirena_start_docker
-    sirena_start_postgresql
-    sirena_start_oracle
+    sirena_start_postgresql & sirena_start_oracle
 }
 
 sirena_stop() {
-    sirena_stop_postgresql
-    sirena_stop_oracle
-    docker stop sirena
+    sirena_stop_postgresql & sirena_stop_oracle
+    sirena_stop_docker
 }
 
 sirena_init_docker() {
@@ -256,8 +290,8 @@ sirena_init_docker() {
     docker exec -u root:root sirena sh -c "chown postgres:postgres -R /postgres"
 
     docker exec -u postgres:postgres sirena sh -c "/usr/lib/postgresql/10/bin/initdb -D $POSTGRESQL_DATA"
-
     docker exec -u postgres:postgres sirena sh -c "cp -r $POSTGRESQL_DATA /postgres"
+
     docker exec -u oracle:oinstall sirena sh -c "cp -r $ORACLE_DATA/orcl /oracle"
 
     sirena_stop
@@ -612,4 +646,29 @@ github_pull() {
 
     cd -
     echo && echo "Done"
+}
+
+################################################################################
+# Utils
+################################################################################
+
+utils_ports_local() {
+    sudo netstat -tulpn
+}
+
+utils_ports_remote() {
+    sudo nmap -sTU -O $@
+}
+
+utils_ports_opened() {
+    if [ $# -eq 0 ]; then
+        utils_ports_local | grep LISTEN
+        return 0
+    fi
+
+    utils_ports_remote $@
+}
+
+utils_ports_established() {
+    sudo lsof -i -P -n | grep ESTABLISHED
 }
