@@ -673,10 +673,20 @@ utils_ports_established() {
     sudo lsof -i -P -n | grep ESTABLISHED
 }
 
+utils_backup() {
+    if [ $# -eq 2 ]; then
+        tar cfvz $1/$2.tar.gz $2
+        return 0
+    fi
+
+    tar cfvz $1.tar.gz $1
+}
+
 utils_backup_to_dropbox() {
     if [ ! $# -eq 1 ]; then
         echo "Usage: ${FUNCNAME[0]} filename"
         return 1
     fi
-    tar cfvz $HOME/Dropbox/sync/development/$1.tar.gz $1
+
+    utils_backup $HOME/Dropbox/sync/development $1
 }
