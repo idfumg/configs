@@ -453,8 +453,9 @@ EMACS="silex/emacs"
 GCC="gcc"
 HTTPBIN="jess/httpbin"
 GITEA="gitea/gitea"
+DROPBOX="janeczku/dropbox"
 
-IMAGES="$FIREFOX $CHROME $CHROMIUM $TELEGRAM $CURL $VIRTUALBOX $SKYPE $THUNDEBIRD $EMACS $GCC $HTTPBIN $GITEA"
+IMAGES="$FIREFOX $CHROME $CHROMIUM $TELEGRAM $CURL $VIRTUALBOX $SKYPE $THUNDEBIRD $EMACS $GCC $HTTPBIN $GITEA $DROPBOX"
 
 user_group() {
     echo "$(id -u $USER):$(id -g $USER)"
@@ -546,8 +547,17 @@ gitea() {
     docker run --rm --name ${FUNCNAME[0]} -p 3002:3000 $GITEA
 }
 
+dropbox() {
+    ln -sf /Dropbox/Dropbox $HOME/Dropbox
+    docker run -d --restart=always --name=dropbox -v /Dropbox:/dbox/Dropbox --net=host -e DBOX_UID=$(id -u $USER) -e DBOX_GID=$(id -g $USER) -v $HOME/.dropbox:/dbox/.dropbox $DROPBOX
+}
+
+dropbox_status() {
+    docker exec -t -i dropbox dropbox status
+}
+
 emacs() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]} -- -u $(id -u $USER):$(id -g $USER) -e SIRENA_PATH_TRUNK -e SIRENA_PATH_STABLE -- $EMACS $@
+    screen -S ${FUNCNAME[0]} -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]} -- -u $(id -u $USER):$(id -g $USER) -e SIRENA_PATH_TRUNK -e SIRENA_PATH_STABLE -v /Dropbox:/Dropbox -- $EMACS $@
 }
 
 ################################################################################
