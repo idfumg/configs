@@ -548,8 +548,14 @@ gitea() {
 }
 
 dropbox() {
-    ln -sf /Dropbox/Dropbox $HOME/Dropbox
-    docker run -d --restart=always --name=dropbox -v /Dropbox:/dbox/Dropbox --net=host -e DBOX_UID=$(id -u $USER) -e DBOX_GID=$(id -g $USER) -v $HOME/.dropbox:/dbox/.dropbox $DROPBOX
+    local DROPBOX_DIR="$HOME/Dropbox"
+
+    if [ -e "/Dropbox" ]; then
+        local DROPBOX_DIR="/Dropbox"
+        ln -sf /Dropbox/Dropbox $HOME/Dropbox
+    fi
+
+    docker run -d --restart=always --name=dropbox -v $DROPBOX_DIR:/dbox/Dropbox --net=host -e DBOX_UID=$(id -u $USER) -e DBOX_GID=$(id -g $USER) -v $HOME/.dropbox:/dbox/.dropbox $DROPBOX
 }
 
 dropbox_status() {
@@ -713,5 +719,15 @@ utils_restore_from_dropbox() {
 
     cd $HOME/1
     utils_restore $HOME/Dropbox/sync/development/$1
+    cd -
+}
+
+utils_backup_dropbox() {
+    local DESTINATION=$HOME/1/Dropbox
+    local SOURCE=$HOME/Dropbox
+
+    mkdir -p $DESTINATION
+    cd $SOURCE
+    cp -fr ./* $DESTINATION
     cd -
 }
