@@ -761,9 +761,9 @@ utils_backup_config() {
     cp ~/.emacs $DESTINATION/.emacs
     cd $DESTINATION
     git pull
-    git add .bashrc .emacs
-    echo && echo
     git diff
+    echo && echo
+    git add .bashrc .emacs
     git status
     echo && echo
     git commit -m "Update configs"
