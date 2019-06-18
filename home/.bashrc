@@ -762,17 +762,17 @@ utils_backup_config() {
 
     cd $DESTINATION
 
-    echo "[git pull]"
+    echo "[git pull]" && echo
     git pull
 
-    echo && echo && echo "[git diff]"
+    echo && echo && echo "[git diff]" && echo
     git diff
 
-    echo && echo && echo "[git status]"
+    echo && echo && echo "[git status]" && echo
     git add .bashrc .emacs
     git status
 
-    echo && echo && echo "[git commit and push]"
+    echo && echo && echo "[git commit and push]" && echo
     git commit -m "Update configs"
     git push origin
 
