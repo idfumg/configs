@@ -763,6 +763,7 @@ utils_backup_config() {
     git diff
     git pull
     git add .bashrc .emacs
+    git status
     git commit -m "Update configs"
     git push origin
     cd -
