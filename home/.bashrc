@@ -454,8 +454,9 @@ GCC="gcc"
 HTTPBIN="jess/httpbin"
 GITEA="gitea/gitea"
 DROPBOX="janeczku/dropbox"
+ELIXIR="elixir"
 
-IMAGES="$FIREFOX $CHROME $CHROMIUM $TELEGRAM $CURL $VIRTUALBOX $SKYPE $THUNDEBIRD $EMACS $GCC $HTTPBIN $GITEA $DROPBOX"
+IMAGES="$FIREFOX $CHROME $CHROMIUM $TELEGRAM $CURL $VIRTUALBOX $SKYPE $THUNDEBIRD $EMACS $GCC $HTTPBIN $GITEA $DROPBOX $ELIXIR"
 
 user_group() {
     echo "$(id -u $USER):$(id -g $USER)"
@@ -565,6 +566,26 @@ dropbox_status() {
 emacs() {
     screen -S ${FUNCNAME[0]} -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]} -- -u $(id -u $USER):$(id -g $USER) -e SIRENA_PATH_TRUNK -e SIRENA_PATH_STABLE -v /Dropbox:/Dropbox -- $EMACS $@
 }
+
+# elixir_init() {
+#     docker run -d -u $(user_group) --network host --rm --name elixir -v $PWD:/src -w /src elixir iex
+# }
+
+# elixir_exec() {
+#     docker exec elixir $@
+# }
+
+# elixir() {
+#     elixir_exec elixir $@
+# }
+
+# iex() {
+#     elixir_exec iex $@
+# }
+
+# mix() {
+#     elixir_exec mix $@
+# }
 
 ################################################################################
 # GITHUB
@@ -726,6 +747,7 @@ utils_backup_dropbox() {
     local DESTINATION=$HOME/1/Dropbox
     local SOURCE=$HOME/Dropbox
 
+    rm -fr $DESTINATION
     mkdir -p $DESTINATION
     cd $SOURCE
     cp -fr ./* $DESTINATION
