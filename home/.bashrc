@@ -759,14 +759,22 @@ utils_backup_config() {
 
     cp ~/.bashrc $DESTINATION/.bashrc
     cp ~/.emacs $DESTINATION/.emacs
+
     cd $DESTINATION
+
+    echo "[git pull]"
     git pull
+
+    echo && echo && echo "[git diff]"
     git diff
-    echo && echo
+
+    echo && echo && echo "[git status]"
     git add .bashrc .emacs
     git status
-    echo && echo
+
+    echo && echo && echo "[git commit and push]"
     git commit -m "Update configs"
     git push origin
+
     cd -
 }
