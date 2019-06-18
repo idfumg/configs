@@ -753,3 +753,16 @@ utils_backup_dropbox() {
     cp -fr ./* $DESTINATION
     cd -
 }
+
+utils_backup_config() {
+    local DESTINATION=~/1/github/MyConfigs/home/
+
+    cp ~/.bashrc $DESTINATION/.bashrc
+    cp ~/.emacs $DESTINATION/.emacs
+    cd $DESTINATION
+    git pull
+    git add .bashrc .emacs
+    git commit -m "Update configs"
+    git push origin
+    cd -
+}
