@@ -748,13 +748,12 @@ utils_restore_from_dropbox() {
 }
 
 utils_backup_dropbox() {
-    local DESTINATION=$HOME/1/Dropbox
-    local SOURCE=$HOME/Dropbox
+    local DESTINATION=$HOME/1/
 
     rm -fr $DESTINATION
     mkdir -p $DESTINATION
-    cd $SOURCE
-    cp -fr ./* $DESTINATION
+    cd
+    utils_backup $DESTINATION $1
     cd -
 }
 
