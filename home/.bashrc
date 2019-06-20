@@ -698,6 +698,11 @@ utils_ports_local() {
 }
 
 utils_ports_remote() {
+    if [ ! $# -eq 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} host"
+        return 1
+    fi
+
     sudo nmap -sTU -O $@
 }
 
