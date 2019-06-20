@@ -197,15 +197,30 @@ cpu_count() {
 }
 
 sirena_exec() {
+    if [ $# -lt 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} command"
+        return 1
+    fi
+
     docker exec -u $(id -u $USER):$(id -g $USER) sirena sh -c ". /root/.bashrc && $@"
 }
 
 sirena_exec_user() {
+    if [ $# -lt 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} command"
+        return 1
+    fi
+
     local ARGS=${@:2}
     docker exec -u $1 sirena sh -c ". /root/.bashrc && $ARGS"
 }
 
 sirena_exec_user_it() {
+    if [ $# -lt 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} command"
+        return 1
+    fi
+
     local ARGS=${@:2}
     docker exec -u $1 -it sirena sh -c ". /root/.bashrc && $ARGS"
 }
@@ -394,6 +409,11 @@ sirena_ts() {
     local FILENAME=$1
     local ARGS=${@:2}
 
+    if [ $# -lt 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} test_name [test_number test_number ...]"
+        return 1
+    fi
+
     if [ $# -eq 1 ]; then
         sirena_exec "cd $SIRENA_PATH_DOCKER/src && ./tscript.sh $FILENAME"
         return 0
@@ -405,11 +425,14 @@ sirena_ts() {
         done
         return 0
     fi
-
-    echo "Usage: sirena_ts file_name.ts [test_number1 test_number2 ...]"
 }
 
 sirena_test() {
+    if [ ! $# -eq 1 ] && [ ! $# -eq 2 ]; then
+        echo "Usage: ${FUNCNAME[0]} module_name [test_name]"
+        return 1
+    fi
+
     if [ $# -eq 1 ]; then
         sirena_exec "cd $SIRENA_PATH_DOCKER/src && XP_LIST=$1 make xp-tests"
         return 0
