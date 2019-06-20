@@ -338,6 +338,10 @@ sirena_build_stable() {
     sirena_build stable stable
 }
 
+sirena_make_sql_change() {
+    sirena_exec "cd $SIRENA_PATH_DOCKER/sql && ./make_sql_change trunk/trunk $@"
+}
+
 sirena_make() {
     sirena_exec "cd $SIRENA_PATH_DOCKER/src && make -sj $(cpu_count) $@"
 }
