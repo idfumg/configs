@@ -715,6 +715,11 @@ utils_ports_established() {
 }
 
 utils_backup() {
+    if [ ! $# -eq 2 ] && [ ! $# -eq 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} filename or ${FUNCNAME[0]} directory filename"
+        return 1
+    fi
+
     if [ $# -eq 2 ]; then
         tar cfvz $1/$2.tar.gz $2
         return 0
@@ -724,6 +729,11 @@ utils_backup() {
 }
 
 utils_backup_show_files() {
+    if [ ! $# -eq 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} filename"
+        return 1
+    fi
+
     tar --list --verbose --file=$1
 }
 
@@ -737,6 +747,11 @@ utils_backup_to_dropbox() {
 }
 
 utils_restore() {
+    if [ ! $# -eq 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} filename"
+        return 1
+    fi
+
     tar xfzv $1
 }
 
@@ -752,6 +767,11 @@ utils_restore_from_dropbox() {
 }
 
 utils_backup_dropbox() {
+    if [ ! $# -eq 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} filename"
+        return 1
+    fi
+
     local DESTINATION=$HOME/1/
 
     rm -fr $DESTINATION
