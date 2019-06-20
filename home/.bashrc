@@ -723,6 +723,10 @@ utils_backup() {
     tar cfvz $1.tar.gz $1
 }
 
+utils_backup_show_files() {
+    tar --list --verbose --file=$1
+}
+
 utils_backup_to_dropbox() {
     if [ ! $# -eq 1 ]; then
         echo "Usage: ${FUNCNAME[0]} filename"
