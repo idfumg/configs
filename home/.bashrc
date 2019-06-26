@@ -812,16 +812,16 @@ utils_restore_from_dropbox() {
 
 utils_backup_dropbox() {
     if [ ! $# -eq 1 ]; then
-        echo "Usage: ${FUNCNAME[0]} filename"
+        echo "Usage: ${FUNCNAME[0]} dropbox_directory"
         return 1
     fi
 
-    local DESTINATION=$HOME/1/
+    local DESTINATION=$HOME/1
 
-    rm -fr $DESTINATION
-    mkdir -p $DESTINATION
+    rm -fr $DESTINATION/$1
+    mkdir -p $DESTINATION/$1
     cd
-    utils_backup $DESTINATION $1
+    utils_backup $DESTINATION/$1 $1
     cd -
 }
 
