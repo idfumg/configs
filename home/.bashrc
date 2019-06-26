@@ -295,6 +295,10 @@ sirena_stop() {
     sirena_stop_docker
 }
 
+sirena_restart() {
+    sirena_stop && sirena_start
+}
+
 sirena_init_docker() {
     local POSTGRESQL_DATA=/var/lib/postgresql/10/main
     local ORACLE_DATA=$ORACLE_BASE/oradata
@@ -403,6 +407,18 @@ sirena_rebuild_posauth() {
 
 sirena_rebuild_airimp() {
     sirena_clean_airimp && sirena_make_airimp
+}
+
+sirena_sql_apply_alter() {
+    if [ ! $# -eq 2 ]; then
+       echo "Usage: ${FUNCNAME[0]} sql_filename login/password"
+       return 1
+    fi
+
+    local SQL_FILENAME=$1
+    local DB_LOGIN_PASSWORD=$2
+
+    sirena_exec_user oracle "echo '@/sirena_src/$SQL_FILENAME' > /root/start.sql && sqlplus $DB_LOGIN_PASSWORD @/root/start.sql"
 }
 
 sirena_ts() {
