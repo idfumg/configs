@@ -849,3 +849,18 @@ utils_backup_config() {
 
     cd -
 }
+
+utils_restore_config() {
+    local DESTINATION=~/1/github/MyConfigs/home/
+
+    cd $DESTINATION
+
+    echo "[git pull]" && echo
+    git pull
+
+    echo "[copying files]" && echo
+    cp $DESTINATION/.bashrc ~/.bashrc
+    cp $DESTINATION/.emacs ~/.emacs
+
+    cd -
+}
