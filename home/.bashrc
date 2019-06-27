@@ -825,11 +825,19 @@ utils_backup_dropbox() {
     cd -
 }
 
+declare -a CONFIG_FILES=(
+~/.bashrc
+~/.emacs
+)
+
 utils_backup_config() {
     local DESTINATION=~/1/github/MyConfigs/home/
 
-    cp ~/.bashrc $DESTINATION/.bashrc
-    cp ~/.emacs $DESTINATION/.emacs
+    for file in $CONFIG_FILES; do
+        cp $file $DESTINATION/.bashrc
+    done
+    # cp ~/.bashrc $DESTINATION/.bashrc
+    # cp ~/.emacs $DESTINATION/.emacs
 
     cd $DESTINATION
 
