@@ -830,14 +830,14 @@ declare -a CONFIG_FILES=(
 .emacs
 )
 
+CONFIG_DESTINATION=~/1/github/MyConfigs/home
+
 utils_backup_config() {
-    local DESTINATION=~/1/github/MyConfigs/home
+    cd $CONFIG_DESTINATION
 
     for file in "${CONFIG_FILES[@]}"; do
-        cp -v $HOME/$file $DESTINATION/$file
+        cp -v $HOME/$file $CONFIG_DESTINATION/$file
     done
-
-    cd $DESTINATION
 
     echo "[git pull]" && echo
     git pull
@@ -862,16 +862,16 @@ utils_backup_config() {
 }
 
 utils_restore_config() {
-    local DESTINATION=~/1/github/MyConfigs/home/
-
-    cd $DESTINATION
+    cd $CONFIG_DESTINATION
 
     echo "[git pull]" && echo
     git pull
 
     echo "[copying files]" && echo
-    cp $DESTINATION/.bashrc ~/.bashrc
-    cp $DESTINATION/.emacs ~/.emacs
+
+    for file in "${CONFIG_FILES[@]}"; do
+        cp -v $CONFIG_DESTINATION/$file $HOME/$file
+    done
 
     cd -
 }
