@@ -836,6 +836,11 @@ utils_backup_config() {
     echo "[git pull]" && echo
     git pull
 
+    if [ -z $(git status -s) ]; then
+        echo "Nothing to do. Exit" && echo
+        return 0;
+    fi
+
     echo && echo && echo "[git diff]" && echo
     git diff
 
