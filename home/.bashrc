@@ -333,8 +333,8 @@ sirena_build() {
     local database_login=$1
     local database_password=$2
 
-    if [ -z $database_login ] && [ -z $database_password ]; then
-        sirena_exec "$build_command $@"
+    if [ -z $database_login ] || [ -z $database_password ]; then
+        sirena_exec "$build_command"
         return 0
     fi
 
