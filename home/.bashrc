@@ -357,6 +357,14 @@ sirena_build_stable() {
     sirena_build stable stable
 }
 
+sirena_build_trunk_db() {
+    sirena_build trunk trunk --createdb
+}
+
+sirena_build_stable_db() {
+    sirena_build stable stable --createdb
+}
+
 sirena_make_sql_change() {
     sirena_exec "cd $SIRENA_PATH_DOCKER/sql && ./make_sql_change trunk/trunk $@"
 }
