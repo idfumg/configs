@@ -477,6 +477,10 @@ sirena_test_airimp() {
     sirena_test "airimp" $@
 }
 
+sirena_rsync() {
+    rsync -vu rail/*{cc,h} apushkin@test:/home/tst/sirena/src/rail/
+}
+
 # docker exec -e LC_CTYPE="en_US.UTF-8" -e LANG="en_US.UTF-8" -e LANGUAGE="en_US:en" -e LC_ALL="en_US.UTF-8" -u root:root sirena sh -c "locale-gen en_US"
 # docker exec -e LC_CTYPE="en_US.UTF-8" -e LANG="en_US.UTF-8" -e LANGUAGE="en_US:en" -e LC_ALL="en_US.UTF-8" -u root:root sirena sh -c "locale-gen en_US.UTF-8"
 # docker exec -e LC_CTYPE="en_US.UTF-8" -e LANG="en_US.UTF-8" -e LANGUAGE="en_US:en" -e LC_ALL="en_US.UTF-8" -u postgres:postgres sirena sh -c "cat /etc/locale.conf"
