@@ -429,6 +429,18 @@ sirena_sql_apply_alter() {
     sirena_exec_user oracle "echo '@/sirena_src/$SQL_FILENAME' > /root/start.sql && sqlplus $DB_LOGIN_PASSWORD @/root/start.sql"
 }
 
+sirena_sql_apply_fdat() {
+    if [ ! $# -eq 2 ]; then
+       echo "Usage: ${FUNCNAME[0]} fdat_filename login/password"
+       return 1
+    fi
+
+    local FDAT_FILENAME=$1
+    local DB_LOGIN_PASSWORD=$2
+
+    sirena_exec_user oracle "cd $SIRENA_PATH_DOCKER && sqlldr $DB_LOGIN_PASSWORD $FDAT_FILENAME"
+}
+
 sirena_ts() {
     local FILENAME=$1
     local ARGS=${@:2}
