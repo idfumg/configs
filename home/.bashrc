@@ -564,9 +564,9 @@ docker_clean() {
     docker_clean_images
 }
 
-firefox() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --gpu --pulseaudio --home --name ${FUNCNAME[0]} -- -u $(user_group) -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads --network host -- $FIREFOX
-}
+# firefox() {
+#     screen -S ${FUNCNAME[0]} -dm x11docker --gpu --pulseaudio --home --name ${FUNCNAME[0]} -- -u $(user_group) -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads --network host -- $FIREFOX
+# }
 
 chrome() {
     screen -S ${FUNCNAME[0]} -dm x11docker --gpu --pulseaudio --home --name ${FUNCNAME[0]} --user=RETAIN -- --no-sandbox -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $CHROME
@@ -576,9 +576,9 @@ chromium() {
     screen -S ${FUNCNAME[0]} -dm x11docker --gpu --pulseaudio --home --name ${FUNCNAME[0]} --user=RETAIN -- --no-sandbox -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $CHROMIUM
 }
 
-telegram() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --gpu --home --pulseaudio --name ${FUNCNAME[0]} -- -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $TELEGRAM
-}
+# telegram() {
+#     screen -S ${FUNCNAME[0]} -dm x11docker --gpu --home --pulseaudio --name ${FUNCNAME[0]} -- -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $TELEGRAM
+# }
 
 curl() {
     docker run --rm --name ${FUNCNAME[0]} -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads $CURL "$@"
@@ -615,24 +615,24 @@ gitea() {
     docker run --rm --name ${FUNCNAME[0]} -p 3002:3000 $GITEA
 }
 
-dropbox() {
-    local DROPBOX_DIR="$HOME/Dropbox"
+# dropbox() {
+#     local DROPBOX_DIR="$HOME/Dropbox"
 
-    if [ -e "/Dropbox" ]; then
-        local DROPBOX_DIR="/Dropbox"
-        ln -sf /Dropbox/Dropbox $HOME/Dropbox
-    fi
+#     if [ -e "/Dropbox" ]; then
+#         local DROPBOX_DIR="/Dropbox"
+#         ln -sf /Dropbox/Dropbox $HOME/Dropbox
+#     fi
 
-    docker run -d --restart=always --name=dropbox -v $DROPBOX_DIR:/dbox/Dropbox --net=host -e DBOX_UID=$(id -u $USER) -e DBOX_GID=$(id -g $USER) -v $HOME/.dropbox:/dbox/.dropbox $DROPBOX
-}
+#     docker run -d --restart=always --name=dropbox -v $DROPBOX_DIR:/dbox/Dropbox --net=host -e DBOX_UID=$(id -u $USER) -e DBOX_GID=$(id -g $USER) -v $HOME/.dropbox:/dbox/.dropbox $DROPBOX
+# }
 
-dropbox_status() {
-    docker exec -t -i dropbox dropbox status
-}
+# dropbox_status() {
+#     docker exec -t -i dropbox dropbox status
+# }
 
-emacs() {
-    screen -S ${FUNCNAME[0]} -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]} -- -u $(id -u $USER):$(id -g $USER) -e SIRENA_PATH_TRUNK -e SIRENA_PATH_STABLE -v /Dropbox:/Dropbox -- $EMACS $@
-}
+# emacs() {
+#     screen -S ${FUNCNAME[0]} -dm x11docker --share $HOME --share $HOME/.emacs --share $HOME/.emacs.d --name ${FUNCNAME[0]} -- -u $(id -u $USER):$(id -g $USER) -e SIRENA_PATH_TRUNK -e SIRENA_PATH_STABLE -v /Dropbox:/Dropbox -- $EMACS $@
+# }
 
 # elixir_init() {
 #     docker run -d -u $(user_group) --network host --rm --name elixir -v $PWD:/src -w /src elixir iex

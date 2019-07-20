@@ -48,7 +48,8 @@
                     ;; hideshow-org
 
                     ;; Neotree for file browsering.
-                    neotree
+                    ;; neotree
+                    treemacs
 
                     ;; Projectile - working with projects
                     projectile helm-projectile
@@ -417,11 +418,13 @@
   (global-set-key [(control ?.)] 'helm-gtags-find-tag)
   (global-set-key [(meta ?.)] 'helm-gtags-find-rtag)
   (global-set-key [(control ?,)] 'helm-gtags-previous-history)
-  (global-set-key [(control ?c) ?n ?t] 'neotree-toggle)
-  (global-set-key [(control ?c) ?n ?r] 'neotree-rename-node)
-  (global-set-key [(control ?c) ?n ?d] 'neotree-delete-node)
-  (global-set-key [(control ?c) ?n ?n] 'neotree-create-node)
-  (global-set-key [(control ?c) ?n ?c] 'neotree-copy-node)
+
+  ;; (global-set-key [(control ?c) ?n ?t] 'neotree-toggle)
+  ;; (global-set-key [(control ?c) ?n ?r] 'neotree-rename-node)
+  ;; (global-set-key [(control ?c) ?n ?d] 'neotree-delete-node)
+  ;; (global-set-key [(control ?c) ?n ?n] 'neotree-create-node)
+  ;; (global-set-key [(control ?c) ?n ?c] 'neotree-copy-node)
+
   (global-set-key [(control ?c) ?m ?m] 'mc/mark-all-dwim)
   (global-set-key [(control ?c) ?m ?l] 'mc/edit-lines)
   (global-set-key [(control ?c) ?m ?n] 'mc/mark-next-like-this)
@@ -1346,9 +1349,12 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   (quote
+    ("0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
  '(package-selected-packages
    (quote
-    (rg request ht web-mode vlf use-package symon solarized-theme smooth-scrolling smart-compile slime s-buffer phi-search-mc neotree monokai-theme mc-extras highlight-symbol hideshow-org helm-projectile helm-gtags helm-company flycheck-pos-tip flycheck-irony engine-mode edit-list diminish company-statistics company-lua company-irony company-c-headers company-anaconda cider ag))))
+    (treemacs yaml-mode symon solarized-theme smooth-scrolling s-buffer request phi-search-mc neotree mc-extras ht highlight-symbol helm-projectile helm-gtags helm-company company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
