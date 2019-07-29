@@ -187,7 +187,7 @@ alias ..="cd .."
 # Sirena helper functions
 ################################################################################
 
-export SIRENA_PATH="$HOME/work"
+export SIRENA_PATH="$HOME/1/work"
 export SIRENA_PATH_TRUNK="$SIRENA_PATH/trunk"
 export SIRENA_PATH_STABLE="$SIRENA_PATH/stable"
 export SIRENA_PATH_DOCKER="/sirena_src"
@@ -225,11 +225,11 @@ sirena_exec_user_it() {
     docker exec -u $1 -it sirena sh -c ". /root/.bashrc && $ARGS"
 }
 
-sirena_cds() {
+sirena_cd_trunk() {
     cd $SIRENA_PATH_TRUNK/src
 }
 
-sirena_cdw() {
+sirena_cd_stable() {
     cd $SIRENA_PATH_STABLE/src
 }
 
