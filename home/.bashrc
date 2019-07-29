@@ -241,14 +241,6 @@ sirena_sqw() {
     sirena_exec_user_it oracle "sqlplus stable/stable"
 }
 
-sirena_data_postgres() {
-    sirena_exec_user postgres "psql -c \"SHOW data_directory\""
-}
-
-sirena_data_oracle() {
-    sirena_exec_user oracle "echo \"select distinct regexp_substr(name,'^.*\\') from v\\\$datafile;\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
-}
-
 sirena_start_docker() {
     local POSTGRESQL_DATA=/var/lib/postgresql/10/main
     local ORACLE_DATA=$ORACLE_BASE/oradata
@@ -271,13 +263,30 @@ sirena_stop_postgresql() {
     sirena_exec_user root:root "service postgresql stop"
 }
 
+sirena_postgresql_command() {
+    if [ ! $# -eq 1 ]; then
+       echo "Usage: ${FUNCNAME[0]} <postgresql sql statement>"
+       return 1
+    fi
+
+    sirena_exec_user postgres:postgres "psql -c \"$1\""
+}
+
 sirena_oracle_command() {
     if [ ! $# -eq 1 ]; then
        echo "Usage: ${FUNCNAME[0]} <oracle sql statement>"
        return 1
     fi
 
-    sirena_exec_user oracle "echo '$1' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+    sirena_exec_user oracle "echo \"$1\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+}
+
+sirena_data_postgres() {
+    sirena_postgresql_command "SHOW data_directory;"
+}
+
+sirena_data_oracle() {
+    sirena_oracle_command "select distinct regexp_substr(name,'^.*\\') from v\\\$datafile;"
 }
 
 sirena_start_oracle() {
@@ -314,7 +323,7 @@ sirena_init_postgres() {
     docker exec -u postgres:postgres sirena sh -c "/usr/lib/postgresql/10/bin/initdb -D $POSTGRESQL_DATA"
 
     sirena_start_postgresql
-    sirena_exec_user postgres:postgres "psql -c \"create user system encrypted password 'manager' superuser;\""
+    sirena_postgresql_command "create user system encrypted password 'manager' superuser;"
 }
 
 sirena_init_oracle() {
