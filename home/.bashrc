@@ -272,6 +272,11 @@ sirena_stop_postgresql() {
 }
 
 sirena_oracle_command() {
+    if [ ! $# -eq 1 ]; then
+       echo "Usage: ${FUNCNAME[0]} <oracle sql statement>"
+       return 1
+    fi
+
     sirena_exec_user oracle "echo '$1' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
 }
 
