@@ -302,6 +302,7 @@ sirena_data_oracle() {
 
 sirena_start_oracle() {
     sirena_oracle_command "startup;"
+    sirena_oracle_command "ALTER SYSTEM SET open_cursors = 2500 SCOPE=BOTH;"
 }
 
 sirena_stop_oracle() {
@@ -323,8 +324,29 @@ sirena_stop() {
     sirena_stop_docker
 }
 
+sirena_is_running() {
+    docker ps -a | grep sirena > /dev/null
+}
+
+sirena_wait_while_docker_removing_container() {
+    sirena_is_running
+    while [ $? -eq 0 ]; do
+        sleep 1
+        sirena_is_running
+    done
+}
+
+sirena_stop_if_running() {
+    sirena_is_running
+    if [ $? -eq 0 ]; then
+        sirena_stop
+        sirena_wait_while_docker_removing_container
+    fi
+}
+
 sirena_restart() {
-    sirena_stop && sirena_start
+    sirena_stop_if_running
+    sirena_start
 }
 
 sirena_init_postgres_build_db() {
@@ -550,6 +572,14 @@ sirena_test_airimp() {
 
 sirena_rsync() {
     rsync -vu rail/*{cc,h} apushkin@test:/home/tst/sirena/src/rail/
+}
+
+sirena_connect_test() {
+    ssh -A apushkin@test
+}
+
+sirena_connect_grs() {
+    ssh -A apushkin@grsbuild
 }
 
 # docker exec -e LC_CTYPE="en_US.UTF-8" -e LANG="en_US.UTF-8" -e LANGUAGE="en_US:en" -e LC_ALL="en_US.UTF-8" -u root:root sirena sh -c "locale-gen en_US"
