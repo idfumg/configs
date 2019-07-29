@@ -889,7 +889,7 @@ utils_restore_from_dropbox() {
     fi
 
     cd $HOME/1
-    utils_restore $HOME/Dropbox/sync/development/$1
+    utils_restore $HOME/Dropbox/sync/development/$1.tar.gz
     cd -
 }
 
