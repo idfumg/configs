@@ -252,10 +252,11 @@ sirena_data_oracle() {
 sirena_start_docker() {
     local POSTGRESQL_DATA=/var/lib/postgresql/10/main
     local ORACLE_DATA=$ORACLE_BASE/oradata
+    local LOCAL_DB_DATA=$HOME/1/work/db
     local STORAGE="storage.komtex:10.1.90.152"
     local SVN="svn.komtex:10.1.90.222"
 
-    docker run --add-host $STORAGE --add-host $SVN --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_PATH_DOCKER -v $HOME/work/db/oracle:$ORACLE_DATA -v $HOME/work/db/postgresql:$POSTGRESQL_DATA sirena/dev:0.10.0 sh -c "trap : TERM INT; sleep infinity & wait"
+    docker run --add-host $STORAGE --add-host $SVN --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_PATH_DOCKER -v $LOCAL_DB_DATA/oracle:$ORACLE_DATA -v $LOCAL_DB_DATA/postgresql:$POSTGRESQL_DATA sirena/dev sh -c "trap : TERM INT; sleep infinity & wait"
 }
 
 sirena_stop_docker() {
@@ -264,20 +265,22 @@ sirena_stop_docker() {
 
 sirena_start_postgresql() {
     sirena_exec_user root:root "service postgresql start"
-    sirena_exec_user postgres:postgres "psql -c \"create user system encrypted password 'manager' superuser;\""
 }
 
 sirena_stop_postgresql() {
     sirena_exec_user root:root "service postgresql stop"
 }
 
+sirena_oracle_command() {
+    sirena_exec_user oracle "echo '$1' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+}
+
 sirena_start_oracle() {
-    sirena_exec_user oracle "echo 'startup;' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
-    sirena_exec_user oracle "echo \"ALTER SYSTEM SET open_cursors = 2500 SCOPE=BOTH;\" > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+    sirena_oracle_command "startup;"
 }
 
 sirena_stop_oracle() {
-    sirena_exec_user oracle "echo 'shutdown;' > /root/start.sql && sqlplus / as sysdba @/root/start.sql"
+    sirena_oracle_command "shutdown;"
 }
 
 sirena_start() {
@@ -299,20 +302,33 @@ sirena_restart() {
     sirena_stop && sirena_start
 }
 
-sirena_init_docker() {
+sirena_init_postgres() {
     local POSTGRESQL_DATA=/var/lib/postgresql/10/main
+
+    docker exec -u root:root sirena sh -c "rm -fr $POSTGRESQL_DATA/*"
+    docker exec -u postgres:postgres sirena sh -c "/usr/lib/postgresql/10/bin/initdb -D $POSTGRESQL_DATA"
+
+    sirena_start_postgresql
+    sirena_exec_user postgres:postgres "psql -c \"create user system encrypted password 'manager' superuser;\""
+}
+
+sirena_init_oracle() {
     local ORACLE_DATA=$ORACLE_BASE/oradata
 
-    docker run --network host --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_PATH_DOCKER -v $HOME/work/db/oracle:/oracle -v $HOME/work/db/postgresql:/postgres sirena/dev:0.10.0 sh -c "trap : TERM INT; sleep infinity & wait"
+    sirena_start_oracle
+    sirena_oracle_command "ALTER SYSTEM SET open_cursors = 2500 SCOPE=BOTH;"
 
     docker exec -u root:root sirena sh -c "chown oracle:oinstall -R /oracle"
-    docker exec -u root:root sirena sh -c "chown postgres:postgres -R /postgres"
-
-    docker exec -u postgres:postgres sirena sh -c "/usr/lib/postgresql/10/bin/initdb -D $POSTGRESQL_DATA"
-    docker exec -u postgres:postgres sirena sh -c "cp -r $POSTGRESQL_DATA /postgres"
-
     docker exec -u oracle:oinstall sirena sh -c "cp -r $ORACLE_DATA/orcl /oracle"
+}
 
+sirena_init_docker() {
+    local POSTGRESQL_DATA=/var/lib/postgresql/10/main
+    local LOCAL_DB_DATA=$HOME/1/work/db
+
+    docker run --network host --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_PATH_DOCKER -v $LOCAL_DB_DATA/oracle:/oracle -v $LOCAL_DB_DATA/postgresql:$POSTGRESQL_DATA sirena/dev sh -c "trap : TERM INT; sleep infinity & wait"
+
+    sirena_init_postgres & sirena_init_oracle
     sirena_stop
 }
 
