@@ -248,7 +248,18 @@ sirena_start_docker() {
     local STORAGE="storage.komtex:10.1.90.152"
     local SVN="svn.komtex:10.1.90.222"
 
-    docker run --add-host $STORAGE --add-host $SVN --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_PATH_DOCKER -v $LOCAL_DB_DATA/oracle:$ORACLE_DATA -v $LOCAL_DB_DATA/postgresql:$POSTGRESQL_DATA sirena/dev sh -c "trap : TERM INT; sleep infinity & wait"
+    docker run \
+           --add-host $STORAGE \
+           --add-host $SVN \
+           --privileged \
+           --rm \
+           --name sirena \
+           -d \
+           -u $(id -u $USER):$(id -g $USER) \
+           -v $PWD:$SIRENA_PATH_DOCKER \
+           -v $LOCAL_DB_DATA/oracle:$ORACLE_DATA \
+           -v $LOCAL_DB_DATA/postgresql:$POSTGRESQL_DATA \
+           sirena/dev sh -c "trap : TERM INT; sleep infinity & wait"
 }
 
 sirena_stop_docker() {
@@ -340,7 +351,17 @@ sirena_init_docker() {
     local POSTGRESQL_DATA=/var/lib/postgresql/10/main
     local LOCAL_DB_DATA=$HOME/1/work/db
 
-    docker run --network host --privileged --rm --name sirena -d  -u $(id -u $USER):$(id -g $USER) -v $PWD:$SIRENA_PATH_DOCKER -v $LOCAL_DB_DATA/oracle:/oracle -v $LOCAL_DB_DATA/postgresql:$POSTGRESQL_DATA sirena/dev sh -c "trap : TERM INT; sleep infinity & wait"
+    docker run \
+           --network host \
+           --privileged \
+           --rm \
+           --name sirena \
+           -d \
+           -u $(id -u $USER):$(id -g $USER) \
+           -v $PWD:$SIRENA_PATH_DOCKER \
+           -v $LOCAL_DB_DATA/oracle:/oracle \
+           -v $LOCAL_DB_DATA/postgresql:$POSTGRESQL_DATA \
+           sirena/dev sh -c "trap : TERM INT; sleep infinity & wait"
 
     sirena_init_postgres & sirena_init_oracle
     sirena_stop
