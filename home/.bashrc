@@ -470,6 +470,10 @@ sirena_make_airimp() {
     sirena_make "airimp"
 }
 
+sirena_make_emd() {
+    sirena_make "emd"
+}
+
 sirena_clean() {
     sirena_exec "cd $SIRENA_PATH_DOCKER/src && make -C $@ clean"
 }
@@ -486,6 +490,10 @@ sirena_clean_airimp() {
     sirena_clean "airimp"
 }
 
+sirena_clean_emd() {
+    sirena_clean "emd"
+}
+
 sirena_rebuild_rail() {
     sirena_clean_rail && sirena_make_rail
 }
@@ -496,6 +504,10 @@ sirena_rebuild_posauth() {
 
 sirena_rebuild_airimp() {
     sirena_clean_airimp && sirena_make_airimp
+}
+
+sirena_rebuild_emd() {
+    sirena_clean_emd && sirena_make_emd
 }
 
 sirena_sql_apply_alter() {
@@ -568,6 +580,10 @@ sirena_test_posauth() {
 
 sirena_test_airimp() {
     sirena_test "airimp" $@
+}
+
+sirena_test_emd() {
+    sirena_test "emd" $@
 }
 
 sirena_rsync() {
