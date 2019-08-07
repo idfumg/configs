@@ -1226,7 +1226,9 @@
   (interactive "DChoose directory: \nMFile extensions: \nMFrom: \nMTo: ")
   (-let ((extensions-quoted (regexp-quote extensions))
          (filenames (directory-files directory t extensions)))
-    (-each filenames (lambda (filename) (my/file/replace-regexp-in-file filename from to)))))
+    (-each filenames (lambda (filename)
+                       (if (not (file-directory-p filename))
+                           (my/file/replace-regexp-in-file filename from to))))))
 
 (defun my/file/indent-file (filename)
   (interactive "fChoose file: ")

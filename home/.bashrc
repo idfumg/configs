@@ -454,6 +454,10 @@ sirena_make() {
     sirena_exec "cd $SIRENA_PATH_DOCKER/src && make -sj $(cpu_count) $@"
 }
 
+sirena_make_libs() {
+    sirena_exec "cd $SIRENA_PATH_DOCKER/sirenalibs && make -sj $(cpu_count) $@"
+}
+
 sirena_make_obrzap() {
     sirena_make "obrzap"
 }
