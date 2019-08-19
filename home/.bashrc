@@ -690,7 +690,7 @@ chromium() {
 # }
 
 curl() {
-    docker run --rm --name ${FUNCNAME[0]} -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads $CURL "$@"
+    docker run --network host --rm --name ${FUNCNAME[0]} -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads $CURL "$@"
 }
 
 virtualbox() {
