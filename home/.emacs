@@ -574,7 +574,7 @@
 
     (defun my/sirena/rail-make ()
       (interactive)
-      (my/sirena/make-in "src/rail" "make -sj12"))
+      (my/sirena/make-in "src/rail" "sirena_make_rail"))
 
     (defun my/sirena/rail-rebuild ()
       (interactive)
@@ -660,6 +660,8 @@
     (add-to-list 'company-backends 'company-irony 'company-c-headers)
 
     ;; Do not ask which command to run when call `compile` command.
+    (setq shell-file-name "bash")
+    (setq shell-command-switch "-ic")
     (setq compilation-read-command nil))
 
   (defun my/c-mode-file-extensions-hook ()

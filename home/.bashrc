@@ -689,9 +689,9 @@ chromium() {
 #     screen -S ${FUNCNAME[0]} -dm x11docker --gpu --home --pulseaudio --name ${FUNCNAME[0]} -- -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $TELEGRAM
 # }
 
-curl() {
-    docker run --network host --rm --name ${FUNCNAME[0]} -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads $CURL "$@"
-}
+# curl() {
+#     docker run --network host --rm --name ${FUNCNAME[0]} -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads $CURL $@
+# }
 
 virtualbox() {
     screen -S ${FUNCNAME[0]} -dm x11docker --gpu --home --name ${FUNCNAME[0]} -- -w $HOME/Downloads -v $HOME/Downloads:$HOME/Downloads -- $VIRTUALBOX
