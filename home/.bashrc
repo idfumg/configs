@@ -419,9 +419,10 @@ sirena_build() {
         return 0
     fi
 
-    if [ $# -eq 2 ] || [ $# -eq 3 ]; then
+    if [ $# -ge 2 ]; then
+        local ARGS=${@:3}
         if [ -n $database_login ] && [ -n $database_password ]; then
-            sirena_exec "$build_command $database_login/$database_password $3"
+            sirena_exec "$build_command $database_login/$database_password $ARGS"
             return 0
         fi
     fi
