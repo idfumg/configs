@@ -193,7 +193,8 @@ export SIRENA_PATH_STABLE="$SIRENA_PATH/stable"
 export SIRENA_PATH_DOCKER="/sirena_src"
 
 cpu_count() {
-    grep -c ^processor /proc/cpuinfo
+    echo 10
+    #grep -c ^processor /proc/cpuinfo
 }
 
 sirena_exec() {
@@ -202,7 +203,7 @@ sirena_exec() {
         return 1
     fi
 
-    docker exec -u $(id -u $USER):$(id -g $USER) sirena sh -c ". /root/.bashrc && $@"
+    docker exec -e MAKE_J=$(cpu_count) -u $(id -u $USER):$(id -g $USER) sirena sh -c ". /root/.bashrc && $@"
 }
 
 sirena_exec_user() {
