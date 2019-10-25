@@ -104,11 +104,13 @@
                     elixir-mode
                     alchemist
 
+                    ;; docker
+                    dockerfile-mode
+
                     ;; yaml
                     yaml-mode
 
-                    ;; docker
-                    dockerfile-mode
+
                     )))
 
     (let ((package-list-was-refreshed? nil))
@@ -1360,7 +1362,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras highlight-symbol helm-projectile helm-gtags helm-company company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag))))
+    (dockerfile-mode yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras highlight-symbol helm-projectile helm-gtags helm-company company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
