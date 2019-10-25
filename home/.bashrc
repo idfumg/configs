@@ -351,11 +351,9 @@ sirena_restart() {
 }
 
 sirena_init_postgres_build_db() {
-    local POSTGRESQL_DIR="/var/lib/postgresql"
-    local POSTGRESQL_DATA="$POSTGRESQL_DIR/10/main"
+    local POSTGRESQL_DATA=/var/lib/postgresql/10/main
 
     docker exec -u root:root sirena sh -c "rm -fr $POSTGRESQL_DATA/*"
-    docker exec -u root:root sirena sh -c "chown postgres:postgres -R $POSTGRESQL_DIR"
     docker exec -u postgres:postgres sirena sh -c "/usr/lib/postgresql/10/bin/initdb -D $POSTGRESQL_DATA"
 }
 

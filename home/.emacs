@@ -1,7 +1,5 @@
 ;; (add-to-list 'load-path "~/.emacs.d")
 
-(setq-local font-size 110)
-
 (defun my/setup/packages ()
   (unless (require 'package)
     (error "Error! Can't find 'package!"))
@@ -157,36 +155,36 @@
                         :inherit 'face
                         :foreground filename-color
 	                    :weight 'bold
-	                    :height font-size)
+	                    :height 220)
 
     (set-face-attribute 'position-face nil
 	                    :inherit 'face
 	                    :foreground position-color
                         :family "Menlo"
 	                    :weight 'bold
-	                    :height font-size)
+	                    :height 220)
 
     (set-face-attribute 'major-mode-face nil
                         :inherit 'face
                         :foreground major-mode-color
-	                    :height font-size)
+	                    :height 220)
 
     (set-face-attribute 'minor-mode-face nil
                         :inherit 'mode-face
                         :foreground minor-mode-color
-                        :height font-size)
+                        :height 220)
 
     (set-face-attribute 'very-long-line-face nil
                         :inherit 'position-face
 	                    :family "Menlo"
 	                    :weight 'bold
-	                    :height font-size
+	                    :height 220
                         :foreground very-long-line-color
 	                    :background "gray20")
 
     (set-face-attribute 'percent-position-face nil
 	                    :inherit 'position-face
-	                    :height font-size
+	                    :height 220
 	                    :weight 'bold
                         :foreground percent-position-color)
 
@@ -238,7 +236,7 @@
 (defun my/setup/font ()
   (set-face-attribute 'default nil
                       :family "Liberation Mono"
-                      :height font-size
+                      :height 220
                       :weight 'normal
                       :width 'normal))
 
@@ -1016,8 +1014,10 @@
             (menu-external-ip (popup-make-item "external-ip" :value 'ExternalIP))
             (menu-shorten-url (popup-make-item "shorten-url" :value 'ShortenUrl))
             (menu-filter-buffer-contents (popup-make-item "filter-buffer-contents" :value 'FilterBufferContents))
+            (menu-open-all-org (popup-make-item "open-all-org" :value 'OpenAllOrg))
 
             (menu-utils (list "utils"
+                              menu-open-all-org
                               menu-kill-all-other-buffers
                               menu-sudo-open-file
                               menu-system-monitor
@@ -1070,7 +1070,8 @@
         ('XmlBeautify (call-interactively 'my/xml/beautify))
         ('ExternalIP (my/utils/get-external-ip))
         ('ShortenUrl (call-interactively 'my/utils/shorten-url))
-        ('FilterBufferContents (call-interactively 'my/utils/filter-buffer-contents)))
+        ('FilterBufferContents (call-interactively 'my/utils/filter-buffer-contents))
+        ('OpenAllOrg (my/utils/open-all-org)))
 
       t))
 
@@ -1355,6 +1356,12 @@
               (setq result (-> (-> "\n" (s-append data)) (s-append result))))))
         (delete-region (point-min) (point-max))
         (insert result)))))
+
+(defun my/utils/open-all-org ()
+  (-let [filename (expand-file-name "~/Dropbox/sync/development/all.org")]
+    (if (not (file-exists-p filename))
+        (error "Error! Your all.org file doesn not exists!")
+      (find-file filename))))
 
 (provide '.emacs)
 (custom-set-variables
