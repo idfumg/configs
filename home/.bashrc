@@ -118,12 +118,21 @@ fi
 
 export PLATFORM=m64
 
+. ~/.env
+
 ################################################################################
 # C++ COMPILER
 ################################################################################
 
-export C_COMPILER='gcc'
-export CXX_COMPILER='g++'
+export EMACS_FONT_SIZE=${DOT_ENV_EMACS_FONT_SIZE:-220}
+export C_COMPILER=${DOT_ENV_C_COMPILER:-'gcc'}
+export CXX_COMPILER=${DOT_ENV_CXX_COMPILER:-'g++'}
+export ENABLE_GLIBCXX_DEBUG=${DOT_ENV_ENABLE_GLIBCXX_DEBUG:-0}
+export SIRENA_PATH=${DOT_ENV_SIRENA_PATH:-}
+export SIRENA_PATH_TRUNK=${DOT_ENV_SIRENA_PATH_TRUNK:-}
+export SIRENA_PATH_STABLE=${DOT_ENV_SIRENA_PATH_STABLE:-}
+export SIRENA_PATH_DOCKER=${DOT_ENV_SIRENA_PATH_DOCKER:-}
+
 export CC=$C_COMPILER
 export CXX=$CXX_COMPILER
 export LOCAL_CC=$C_COMPILER
@@ -186,11 +195,6 @@ alias ..="cd .."
 ################################################################################
 # Sirena helper functions
 ################################################################################
-
-export SIRENA_PATH="$HOME/1/work"
-export SIRENA_PATH_TRUNK="$SIRENA_PATH/trunk"
-export SIRENA_PATH_STABLE="$SIRENA_PATH/stable"
-export SIRENA_PATH_DOCKER="/sirena_src"
 
 cpu_count() {
     echo 10
@@ -401,7 +405,7 @@ sirena_init_docker() {
 }
 
 sirena_build() {
-    local SIRENA_BUILD_VARS="BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=1 LANG=en_US.UTF-8 LANGUAGE=en_US"
+    local SIRENA_BUILD_VARS="BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=${ENABLE_GLIBCXX_DEBUG} LANG=en_US.UTF-8 LANGUAGE=en_US"
 
     local gcc_version="
     echo CC=\${CC}
@@ -1012,5 +1016,3 @@ utils_restore_config() {
 
     cd -
 }
-
-. .env
