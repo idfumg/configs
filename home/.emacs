@@ -49,8 +49,8 @@
                     ;; hideshow-org
 
                     ;; Neotree for file browsering.
-                    ;; neotree
-                    treemacs
+                    neotree
+                    ;;treemacs
 
                     ;; Projectile - working with projects
                     projectile helm-projectile
@@ -130,7 +130,7 @@
     (if (file-exists-p envfile)
         (load-env-vars envfile)))
   (let ((font-size-default "110")
-        (font-size-env (getenv "EMACS_FONT_SIZE")))
+        (font-size-env (or (getenv "EMACS_FONT_SIZE") (getenv "DOT_ENV_EMACS_FONT_SIZE"))))
     (setq font-size (string-to-number (or font-size-env font-size-default)))))
 
 (defun my/setup/mode-line (&rest args)
@@ -1376,3 +1376,20 @@
       (find-file filename))))
 
 (provide '.emacs)
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-safe-themes
+   (quote
+    ("0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
+ '(package-selected-packages
+   (quote
+    (neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
