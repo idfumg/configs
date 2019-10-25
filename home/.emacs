@@ -1,5 +1,7 @@
 ;; (add-to-list 'load-path "~/.emacs.d")
 
+(setq-local font-size 110)
+
 (defun my/setup/packages ()
   (unless (require 'package)
     (error "Error! Can't find 'package!"))
@@ -155,36 +157,36 @@
                         :inherit 'face
                         :foreground filename-color
 	                    :weight 'bold
-	                    :height 220)
+	                    :height font-size)
 
     (set-face-attribute 'position-face nil
 	                    :inherit 'face
 	                    :foreground position-color
                         :family "Menlo"
 	                    :weight 'bold
-	                    :height 220)
+	                    :height font-size)
 
     (set-face-attribute 'major-mode-face nil
                         :inherit 'face
                         :foreground major-mode-color
-	                    :height 220)
+	                    :height font-size)
 
     (set-face-attribute 'minor-mode-face nil
                         :inherit 'mode-face
                         :foreground minor-mode-color
-                        :height 220)
+                        :height font-size)
 
     (set-face-attribute 'very-long-line-face nil
                         :inherit 'position-face
 	                    :family "Menlo"
 	                    :weight 'bold
-	                    :height 220
+	                    :height font-size
                         :foreground very-long-line-color
 	                    :background "gray20")
 
     (set-face-attribute 'percent-position-face nil
 	                    :inherit 'position-face
-	                    :height 220
+	                    :height font-size
 	                    :weight 'bold
                         :foreground percent-position-color)
 
@@ -236,7 +238,7 @@
 (defun my/setup/font ()
   (set-face-attribute 'default nil
                       :family "Liberation Mono"
-                      :height 220
+                      :height font-size
                       :weight 'normal
                       :width 'normal))
 
