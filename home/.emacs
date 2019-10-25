@@ -1,7 +1,5 @@
 ;; (add-to-list 'load-path "~/.emacs.d")
 
-(setq-local font-size 110)
-
 (defun my/setup/packages ()
   (unless (require 'package)
     (error "Error! Can't find 'package!"))
@@ -112,6 +110,8 @@
                     ;; yaml
                     yaml-mode
 
+                    ;; system environment
+                    load-env-vars
 
                     )))
 
@@ -123,6 +123,15 @@
             (setq package-list-was-refreshed? t))
           (message "Install package %s" package)
           (package-install package))))))
+
+(defun my/setup/font-size ()
+  (require 'load-env-vars)
+  (let ((envfile (expand-file-name "~/.env")))
+    (if (file-exists-p envfile)
+        (load-env-vars envfile)))
+  (let ((font-size-default "110")
+        (font-size-env (getenv "EMACS_FONT_SIZE")))
+    (setq font-size (string-to-number (or font-size-env font-size-default)))))
 
 (defun my/setup/mode-line (&rest args)
   (let ((read-only-color (plist-get args :read-only-color))
@@ -1096,6 +1105,7 @@
 
 (defun main ()
   (my/setup/packages)
+  (my/setup/font-size)
   (require 's-buffer)
   (require 'dash)
   (my/setup/misc)
@@ -1373,7 +1383,7 @@
  ;; If there is more than one, they won't work right.
  '(package-selected-packages
    (quote
-    (dockerfile-mode yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras highlight-symbol helm-projectile helm-gtags helm-company company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag))))
+    (load-env-vars dockerfile-mode yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras highlight-symbol helm-projectile helm-gtags helm-company company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

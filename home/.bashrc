@@ -1012,3 +1012,5 @@ utils_restore_config() {
 
     cd -
 }
+
+. .env
