@@ -643,11 +643,10 @@
         (add-to-list 'compilation-finish-functions 'my/sirena/compilation-finished-hook)
         (global-set-key [(control ?x) ?m] 'my/sirena/rail-make)
         (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'cp866)))
-        (add-hook 'shell-mode-hook (lambda () (prefer-coding-system 'cp866)))
+        (add-hook 'shell-mode-hook (lambda () (prefer-coding-system 'cp866)))))
         ;; (-each sirena-env-vars (lambda (item) (setenv (car item) (cdr item))))
         ;; (my/shell/add-to-env "PATH" (cdr (assoc "ORACLE_BIN" sirena-env-vars)))
-        ;; (my/shell/add-to-env "LD_LIBRARY_PATH" (cdr (assoc "ORACLE_LIB" sirena-env-vars)))))
-  )
+        ;; (my/shell/add-to-env "LD_LIBRARY_PATH" (cdr (assoc "ORACLE_LIB" sirena-env-vars))))))
 
   (defun my/c-mode-hook()
     (c-add-style "mycodingstyle"
