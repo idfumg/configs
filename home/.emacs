@@ -27,6 +27,8 @@
                     company-c-headers
                     irony
 
+                    company-tabnine
+
                     ;; python
                     anaconda-mode
 		    company-anaconda
@@ -112,6 +114,7 @@
 
                     ;; system environment
                     load-env-vars
+                    dotenv-mode
 
                     )))
 
@@ -525,14 +528,15 @@
 
     (defun my/sirena/open-trunk ()
       (interactive)
-      (-let [path (getenv "SIRENA_PATH_TRUNK")]
+      (-let [path (expand-file-name (getenv "DOT_ENV_SIRENA_PATH_TRUNK"))]
+        (message path)
         (if path
             (find-file (s-concat path "/src/rail/rail_order.cc"))
           (error "Error! No sirena trunk located!"))))
 
     (defun my/sirena/open-stable ()
       (interactive)
-      (-let [path (getenv "SIRENA_PATH_STABLE")]
+      (-let [path (expand-file-name (getenv "DOT_ENV_SIRENA_PATH_STABLE"))]
         (if path
             (find-file (s-concat path "/src/rail/rail_order.cc"))
           (error "Error! No sirena stable located!")))))
@@ -623,15 +627,15 @@
             (my/tooltip/show "\n Compilation successful :-) \n" "green"))
         (my/tooltip/show "\n Compilation failed :-( \n" "red")))
 
-    (-let [sirena-env-vars '(("ORACLE_BASE" . "/u01/app/oracle")
-                             ("ORACLE_HOME" . "/u01/app/oracle/product/12.1.0/db_1")
-                             ("ORACLE_BIN" . "/u01/app/oracle/product/12.1.0/db_1/bin")
-                             ("ORACLE_LIB" . "/u01/app/oracle/product/12.1.0/db_1/lib")
-                             ("ORACLE_SID" . "orcl")
-                             ("ORACLE_INVENTORY" . "/u01/app/oracle/product/12.1.0/db_1/inventory")
-                             ("NLS_LANG" . "AMERICAN_CIS.RU8PC866")
-                             ("SVN_SSH" . "ssh -i /home/idfumg/.ssh/id_rsa -l svn")
-                             ("SVN_BASE" . "svn+ssh://svn/SVNroot/sirena"))]
+    ;; (-let [sirena-env-vars '(("ORACLE_BASE" . "/u01/app/oracle")
+    ;;                          ("ORACLE_HOME" . "/u01/app/oracle/product/12.1.0/db_1")
+    ;;                          ("ORACLE_BIN" . "/u01/app/oracle/product/12.1.0/db_1/bin")
+    ;;                          ("ORACLE_LIB" . "/u01/app/oracle/product/12.1.0/db_1/lib")
+    ;;                          ("ORACLE_SID" . "orcl")
+    ;;                          ("ORACLE_INVENTORY" . "/u01/app/oracle/product/12.1.0/db_1/inventory")
+    ;;                          ("NLS_LANG" . "AMERICAN_CIS.RU8PC866")
+    ;;                          ("SVN_SSH" . "ssh -i /home/idfumg/.ssh/id_rsa -l svn")
+    ;;                          ("SVN_BASE" . "svn+ssh://svn/SVNroot/sirena"))]
 
       (when (my/sirena/in-project-now?)
         (setq tooltip-hide-delay 2)
@@ -640,9 +644,10 @@
         (global-set-key [(control ?x) ?m] 'my/sirena/rail-make)
         (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'cp866)))
         (add-hook 'shell-mode-hook (lambda () (prefer-coding-system 'cp866)))
-        (-each sirena-env-vars (lambda (item) (setenv (car item) (cdr item))))
-        (my/shell/add-to-env "PATH" (cdr (assoc "ORACLE_BIN" sirena-env-vars)))
-        (my/shell/add-to-env "LD_LIBRARY_PATH" (cdr (assoc "ORACLE_LIB" sirena-env-vars))))))
+        ;; (-each sirena-env-vars (lambda (item) (setenv (car item) (cdr item))))
+        ;; (my/shell/add-to-env "PATH" (cdr (assoc "ORACLE_BIN" sirena-env-vars)))
+        ;; (my/shell/add-to-env "LD_LIBRARY_PATH" (cdr (assoc "ORACLE_LIB" sirena-env-vars)))))
+  )
 
   (defun my/c-mode-hook()
     (c-add-style "mycodingstyle"
@@ -906,7 +911,12 @@
 
     (setq company-idle-delay 0)
     (company-statistics-mode)
-    (global-company-mode))
+    (global-company-mode)
+
+    (require 'company-tabnine)
+    (add-to-list 'company-backends #'company-tabnine)
+    (setq company-idle-delay 0)
+    (setq company-show-numbers t))
 
   (add-hook 'after-init-hook 'my/setup/company-hook))
 
@@ -1386,7 +1396,7 @@
     ("0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
  '(package-selected-packages
    (quote
-    (neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag))))
+    (dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

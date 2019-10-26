@@ -120,23 +120,78 @@ export PLATFORM=m64
 
 . ~/.env
 
+# Example of the `.env` file
+
+export DOT_ENV_EMACS_FONT_SIZE=110
+export DOT_ENV_C_COMPILER=gcc
+export DOT_ENV_CXX_COMPILER=g++
+export DOT_ENV_ENABLE_GLIBCXX_DEBUG=0
+export DOT_ENV_EDITOR=emacs
+export DOT_ENV_VISUAL=emacs
+export DOT_ENV_LC_ALL=POSIX
+export DOT_ENV_TERM=screen-256color
+
+export DOT_ENV_SIRENA_PATH='~/1/work'
+export DOT_ENV_SIRENA_PATH_TRUNK='~/1/work/trunk'
+export DOT_ENV_SIRENA_PATH_STABLE='~/1/work/stable'
+export DOT_ENV_SIRENA_PATH_DOCKER='/sirena_src'
+export DOT_ENV_SIRENA_CPU_COUNT=7
+export DOT_ENV_SIRENA_ORACLE_BASE='/u01/app/oracle'
+export DOT_ENV_SIRENA_ORACLE_HOME='${ORACLE_BASE}/product/12.2.0/db_1'
+export DOT_ENV_SIRENA_ORACLE_SID='orcl'
+export DOT_ENV_SIRENA_ORACLE_INVENTORY='${ORACLE_HOME}/inventory'
+export DOT_ENV_SIRENA_ORACLE_PATH='${ORACLE_HOME}/bin'
+export DOT_ENV_SIRENA_ORACLE_LD_LIBRARY_PATH='${ORACLE_HOME}/lib'
+export DOT_ENV_SIRENA_ORACLE_NLS_LANG='AMERICAN_CIS.RU8PC866'
+export DOT_ENV_SIRENA_SVN_SSH='ssh -i ${HOME}/.ssh/id_rsa -l svn'
+export DOT_ENV_SIRENA_SVN_BASE='svn+ssh://svn/SVNroot/sirena'
+
 ################################################################################
-# C++ COMPILER
+# Environment variables
 ################################################################################
 
 export EMACS_FONT_SIZE=${DOT_ENV_EMACS_FONT_SIZE:-220}
 export C_COMPILER=${DOT_ENV_C_COMPILER:-'gcc'}
 export CXX_COMPILER=${DOT_ENV_CXX_COMPILER:-'g++'}
 export ENABLE_GLIBCXX_DEBUG=${DOT_ENV_ENABLE_GLIBCXX_DEBUG:-0}
+export EDITOR=${DOT_ENV_EDITOR:-nano}
+export VISUAL=${DOT_ENV_VISUAL:-nano}
+export LC_ALL=${DOT_ENV_LC_ALL:-POSIX}
+export TERM=${DOT_ENV_TERM:-screen-256color}
+
 export SIRENA_PATH=${DOT_ENV_SIRENA_PATH:-}
 export SIRENA_PATH_TRUNK=${DOT_ENV_SIRENA_PATH_TRUNK:-}
 export SIRENA_PATH_STABLE=${DOT_ENV_SIRENA_PATH_STABLE:-}
 export SIRENA_PATH_DOCKER=${DOT_ENV_SIRENA_PATH_DOCKER:-}
+export SIRENA_CPU_COUNT=${DOT_ENV_SIRENA_CPU_COUNT:-4}
+export ORACLE_BASE=${DOT_ENV_SIRENA_ORACLE_BASE:-}
+export ORACLE_HOME=${DOT_ENV_SIRENA_ORACLE_HOME:-}
+export ORACLE_SID=${DOT_ENV_SIRENA_ORACLE_SID:-}
+export ORACLE_INVENTORY=${DOT_ENV_SIRENA_ORACLE_INVENTORY:-}
+export ORACLE_PATH=${DOT_ENV_SIRENA_ORACLE_PATH:-}
+export ORACLE_LD_LIBRARY_PATH=${DOT_ENV_SIRENA_ORACLE_LD_LIBRARY_PATH:-}
+export ORALCE_NLS_LANG=${DOT_ENV_SIRENA_ORACLE_NLS_LANG:-}
+export SVN_SSH=${DOT_ENV_SIRENA_SVN_SSH:-}
+export SVN_BASE=${DOT_ENV_SIRENA_SVN_BASE:-}
+export PATH=${ORACLE_PATH}:${PATH}
+export LD_LIBRARY_PATH=${ORACLE_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}
 
-export CC=$C_COMPILER
-export CXX=$CXX_COMPILER
-export LOCAL_CC=$C_COMPILER
-export LOCAL_CXX=$CXX_COMPILER
+export CC=${C_COMPILER}
+export CXX=${CXX_COMPILER}
+export LOCAL_CC=${C_COMPILER}
+export LOCAL_CXX=${CXX_COMPILER}
+export PATH=${HOME}/bin:${PATH}
+export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
+
+################################################################################
+# Aliases
+################################################################################
+
+alias ..="cd .."
+
+################################################################################
+# Helper functions
+################################################################################
 
 gcc_version() {
     echo '****************** ' $CC ' configuration **********************\n'
@@ -151,54 +206,11 @@ gcc_version() {
 }
 
 ################################################################################
-# SSH
-################################################################################
-
-export SVN_SSH='ssh -i $HOME/.ssh/id_rsa -l svn'
-export SVN_BASE='svn+ssh://svn/SVNroot/sirena'
-
-################################################################################
-# ORACLE
-################################################################################
-
-export ORACLE_BASE=/u01/app/oracle
-export ORACLE_HOME=$ORACLE_BASE/product/12.2.0/db_1
-export ORACLE_SID=orcl
-export ORACLE_INVENTORY=$ORACLE_HOME/inventory
-export PATH=$ORACLE_HOME/bin:$PATH
-export LD_LIBRARY_PATH=$ORACLE_HOME/lib:$LD_LIBRARY_PATH
-export NLS_LANG=AMERICAN_CIS.RU8PC866
-
-################################################################################
-# MISC
-################################################################################
-
-export LC_ALL=POSIX
-export EDITOR=nano
-export VISUAL=nano
-export PATH=$HOME/bin:$PATH
-export TERM=screen-256color
-export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
-
-# export PLATFORM=m64
-# export LANGUAGE=en_US
-# export LANG=en_US.UTF-8
-# export LANG=ru_RU.utf8
-# export LOCALE=ru_RU.IBM866
-
-################################################################################
-# Aliases
-################################################################################
-
-alias ..="cd .."
-
-################################################################################
 # Sirena helper functions
 ################################################################################
 
 cpu_count() {
-    echo 10
-    #grep -c ^processor /proc/cpuinfo
+    grep -c ^processor /proc/cpuinfo
 }
 
 sirena_exec() {
@@ -207,7 +219,7 @@ sirena_exec() {
         return 1
     fi
 
-    docker exec -e MAKE_J=$(cpu_count) -u $(id -u $USER):$(id -g $USER) sirena sh -c ". /root/.bashrc && $@"
+    docker exec -e MAKE_J=${SIRENA_CPU_COUNT} -u $(id -u $USER):$(id -g $USER) sirena sh -c ". /root/.bashrc && $@"
 }
 
 sirena_exec_user() {
@@ -261,7 +273,7 @@ sirena_start_docker() {
            --name sirena \
            -d \
            -u $(id -u $USER):$(id -g $USER) \
-           -v $PWD:$SIRENA_PATH_DOCKER \
+           -v $PWD:${SIRENA_PATH_DOCKER} \
            -v $LOCAL_DB_DATA/oracle:$ORACLE_DATA \
            -v $LOCAL_DB_DATA/postgresql:$POSTGRESQL_DATA \
            sirena/dev sh -c "trap : TERM INT; sleep infinity & wait"
@@ -395,7 +407,7 @@ sirena_init_docker() {
            --name sirena \
            -d \
            -u $(id -u $USER):$(id -g $USER) \
-           -v $PWD:$SIRENA_PATH_DOCKER \
+           -v $PWD:${SIRENA_PATH_DOCKER} \
            -v $LOCAL_DB_DATA/oracle:/oracle \
            -v $LOCAL_DB_DATA/postgresql:$POSTGRESQL_DATA \
            sirena/dev sh -c "trap : TERM INT; sleep infinity & wait"
@@ -416,7 +428,7 @@ sirena_build() {
     echo ''
     echo \$(\${CC} -xc++ -E -v -)"
 
-    local build_command="$gcc_version && cd $SIRENA_PATH_DOCKER && echo Path: \${PWD} && $SIRENA_BUILD_VARS ./buildFromScratch.sh"
+    local build_command="$gcc_version && cd ${SIRENA_PATH_DOCKER} && echo Path: \${PWD} && $SIRENA_BUILD_VARS ./buildFromScratch.sh"
 
     local database_login=$1
     local database_password=$2
@@ -455,15 +467,15 @@ sirena_build_stable_db() {
 }
 
 sirena_make_sql_change() {
-    sirena_exec "cd $SIRENA_PATH_DOCKER/sql && ./make_sql_change trunk/trunk $@"
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/sql && ./make_sql_change trunk/trunk $@"
 }
 
 sirena_make() {
-    sirena_exec "cd $SIRENA_PATH_DOCKER/src && make -sj $(cpu_count) $@"
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make -sj ${SIRENA_CPU_COUNT} $@"
 }
 
 sirena_make_libs() {
-    sirena_exec "cd $SIRENA_PATH_DOCKER/sirenalibs && make -sj $(cpu_count) $@"
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/sirenalibs && make -sj ${SIRENA_CPU_COUNT} $@"
 }
 
 sirena_make_obrzap() {
@@ -487,7 +499,7 @@ sirena_make_emd() {
 }
 
 sirena_clean() {
-    sirena_exec "cd $SIRENA_PATH_DOCKER/src && make -C $@ clean"
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make -C $@ clean"
 }
 
 sirena_clean_rail() {
@@ -543,7 +555,7 @@ sirena_sql_apply_fdat() {
     local FDAT_FILENAME=$1
     local DB_LOGIN_PASSWORD=$2
 
-    sirena_exec_user oracle "cd $SIRENA_PATH_DOCKER && sqlldr $DB_LOGIN_PASSWORD $FDAT_FILENAME"
+    sirena_exec_user oracle "cd ${SIRENA_PATH_DOCKER} && sqlldr $DB_LOGIN_PASSWORD $FDAT_FILENAME"
 }
 
 sirena_ts() {
@@ -556,13 +568,13 @@ sirena_ts() {
     fi
 
     if [ $# -eq 1 ]; then
-        sirena_exec "cd $SIRENA_PATH_DOCKER/src && ./tscript.sh $FILENAME"
+        sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && ./tscript.sh $FILENAME"
         return 0
     fi
 
     if [ $# -gt 1 ]; then
         for num in $ARGS; do
-            sirena_exec "cd $SIRENA_PATH_DOCKER/src && ./tscript.sh $FILENAME $num"
+            sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && ./tscript.sh $FILENAME $num"
         done
         return 0
     fi
@@ -575,11 +587,11 @@ sirena_test() {
     fi
 
     if [ $# -eq 1 ]; then
-        sirena_exec "cd $SIRENA_PATH_DOCKER/src && XP_LIST=$1 make xp-tests"
+        sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && XP_LIST=$1 make xp-tests"
         return 0
     fi
 
-    sirena_exec "cd $SIRENA_PATH_DOCKER/src && XP_LIST=$1.$2 make xp-tests"
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && XP_LIST=$1.$2 make xp-tests"
 }
 
 sirena_test_rail() {
