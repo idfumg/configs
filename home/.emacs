@@ -252,7 +252,7 @@
                       :width 'normal))
 
 (defun my/setup/theme ()
-  (load-theme 'solarized-dark)
+  (load-theme 'solarized-dark t)
 
   (my/setup/mode-line
    :read-only-color "green"
@@ -278,7 +278,7 @@
   (set-face-background 'region "DarkSlateGray"))
 
 (defun my/setup/theme-console ()
-  (load-theme 'solarized-dark)
+  (load-theme 'solarized-dark t)
 
   (my/setup/mode-line
    :read-only-color "green"
