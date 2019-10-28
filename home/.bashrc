@@ -122,29 +122,29 @@ export PLATFORM=m64
 
 # Example of the `.env` file
 
-export DOT_ENV_EMACS_FONT_SIZE=110
-export DOT_ENV_C_COMPILER=gcc
-export DOT_ENV_CXX_COMPILER=g++
-export DOT_ENV_ENABLE_GLIBCXX_DEBUG=0
-export DOT_ENV_EDITOR=emacs
-export DOT_ENV_VISUAL=emacs
-export DOT_ENV_LC_ALL=POSIX
-export DOT_ENV_TERM=screen-256color
+# export DOT_ENV_EMACS_FONT_SIZE=110
+# export DOT_ENV_C_COMPILER=gcc
+# export DOT_ENV_CXX_COMPILER=g++
+# export DOT_ENV_ENABLE_GLIBCXX_DEBUG=0
+# export DOT_ENV_EDITOR=emacs
+# export DOT_ENV_VISUAL=emacs
+# export DOT_ENV_LC_ALL=POSIX
+# export DOT_ENV_TERM=screen-256color
 
-export DOT_ENV_SIRENA_PATH='~/1/work'
-export DOT_ENV_SIRENA_PATH_TRUNK='~/1/work/trunk'
-export DOT_ENV_SIRENA_PATH_STABLE='~/1/work/stable'
-export DOT_ENV_SIRENA_PATH_DOCKER='/sirena_src'
-export DOT_ENV_SIRENA_CPU_COUNT=7
-export DOT_ENV_SIRENA_ORACLE_BASE='/u01/app/oracle'
-export DOT_ENV_SIRENA_ORACLE_HOME='${ORACLE_BASE}/product/12.2.0/db_1'
-export DOT_ENV_SIRENA_ORACLE_SID='orcl'
-export DOT_ENV_SIRENA_ORACLE_INVENTORY='${ORACLE_HOME}/inventory'
-export DOT_ENV_SIRENA_ORACLE_PATH='${ORACLE_HOME}/bin'
-export DOT_ENV_SIRENA_ORACLE_LD_LIBRARY_PATH='${ORACLE_HOME}/lib'
-export DOT_ENV_SIRENA_ORACLE_NLS_LANG='AMERICAN_CIS.RU8PC866'
-export DOT_ENV_SIRENA_SVN_SSH='ssh -i ${HOME}/.ssh/id_rsa -l svn'
-export DOT_ENV_SIRENA_SVN_BASE='svn+ssh://svn/SVNroot/sirena'
+# export DOT_ENV_SIRENA_PATH='~/1/work'
+# export DOT_ENV_SIRENA_PATH_TRUNK='~/1/work/trunk'
+# export DOT_ENV_SIRENA_PATH_STABLE='~/1/work/stable'
+# export DOT_ENV_SIRENA_PATH_DOCKER='/sirena_src'
+# export DOT_ENV_SIRENA_CPU_COUNT=7
+# export DOT_ENV_SIRENA_ORACLE_BASE='/u01/app/oracle'
+# export DOT_ENV_SIRENA_ORACLE_HOME='${ORACLE_BASE}/product/12.2.0/db_1'
+# export DOT_ENV_SIRENA_ORACLE_SID='orcl'
+# export DOT_ENV_SIRENA_ORACLE_INVENTORY='${ORACLE_HOME}/inventory'
+# export DOT_ENV_SIRENA_ORACLE_PATH='${ORACLE_HOME}/bin'
+# export DOT_ENV_SIRENA_ORACLE_LD_LIBRARY_PATH='${ORACLE_HOME}/lib'
+# export DOT_ENV_SIRENA_ORACLE_NLS_LANG='AMERICAN_CIS.RU8PC866'
+# export DOT_ENV_SIRENA_SVN_SSH='ssh -i ${HOME}/.ssh/id_rsa -l svn'
+# export DOT_ENV_SIRENA_SVN_BASE='svn+ssh://svn/SVNroot/sirena'
 
 ################################################################################
 # Environment variables
