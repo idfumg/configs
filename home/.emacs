@@ -365,11 +365,20 @@
   (global-set-key [(control ?y)] 'yank)
   (global-set-key [(control ?н)] 'yank)
 
-  (global-set-key [(meta ?k)] 'kill-sentence)
-  (global-set-key [(meta ?л)] 'kill-sentence)
+  (global-set-key [(meta ?k)] 'my/utils/kill-sentence)
+  (global-set-key [(meta ?л)] 'my/utils/kill-sentence)
 
-  (global-set-key [(control ?k)] 'kill-line)
-  (global-set-key [(control ?л)] 'kill-line)
+  (global-set-key [(control ?d)] 'delete-forward-char)
+  (global-set-key [(control ?в)] 'delete-forward-char)
+
+  (global-set-key [(meta ?d)] 'my/utils/kill-word)
+  (global-set-key [(meta ?в)] 'my/utils/kill-word)
+
+  (global-set-key [(control backspace)] 'my/utils/backward-kill-word)
+  (global-set-key [(meta backspace)] 'my/utils/backward-kill-word)
+
+  (global-set-key [(control ?k)] 'my/utils/kill-line)
+  (global-set-key [(control ?л)] 'my/utils/kill-line)
 
   (global-set-key [(control meta ?e)] 'end-of-defun)
   (global-set-key [(control meta ?у)] 'end-of-defun)
@@ -397,12 +406,6 @@
 
   (global-set-key [(control meta ?n)] 'scroll-up-command)
   (global-set-key [(control meta ?т)] 'scroll-up-command)
-
-  (global-set-key [(control ?d)] 'delete-forward-char)
-  (global-set-key [(control ?в)] 'delete-forward-char)
-
-  (global-set-key [(meta ?d)] 'kill-word)
-  (global-set-key [(meta ?в)] 'kill-word)
 
   (global-set-key [(control ?b)] 'backward-char)
   (global-set-key [(control ?и)] 'backward-char)
@@ -1383,6 +1386,30 @@
     (if (not (file-exists-p filename))
         (error "Error! Your all.org file doesn not exists!")
       (find-file filename))))
+
+(defun my/utils/kill-word ()
+  (interactive)
+  (kill-word 1)
+  (when kill-ring
+    (setq kill-ring (cdr kill-ring))))
+
+(defun my/utils/backward-kill-word ()
+  (interactive)
+  (backward-kill-word 1)
+  (when kill-ring
+    (setq kill-ring (cdr kill-ring))))
+
+(defun my/utils/kill-sentence ()
+  (interactive)
+  (kill-sentence 1)
+  (when kill-ring
+    (setq kill-ring (cdr kill-ring))))
+
+(defun my/utils/kill-line ()
+  (interactive)
+  (kill-line 1)
+  (when kill-ring
+    (setq kill-ring (cdr kill-ring))))
 
 (provide '.emacs)
 (custom-set-variables
