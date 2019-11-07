@@ -1038,9 +1038,13 @@
             (menu-shorten-url (popup-make-item "shorten-url" :value 'ShortenUrl))
             (menu-filter-buffer-contents (popup-make-item "filter-buffer-contents" :value 'FilterBufferContents))
             (menu-open-all-org (popup-make-item "open-all-org" :value 'OpenAllOrg))
+            (menu-open-dot-emacs (popup-make-item "open-dot-emacs" :value 'OpenDotEmacs))
+            (menu-open-dot-bashrc (popup-make-item "open-dot-bashrc" :value 'OpenDotBashrc))
 
             (menu-utils (list "utils"
                               menu-open-all-org
+                              menu-open-dot-emacs
+                              menu-open-dot-bashrc
                               menu-kill-all-other-buffers
                               menu-sudo-open-file
                               menu-system-monitor
@@ -1094,7 +1098,9 @@
         ('ExternalIP (my/utils/get-external-ip))
         ('ShortenUrl (call-interactively 'my/utils/shorten-url))
         ('FilterBufferContents (call-interactively 'my/utils/filter-buffer-contents))
-        ('OpenAllOrg (my/utils/open-all-org)))
+        ('OpenAllOrg (my/utils/open-all-org))
+        ('OpenDotEmacs (my/utils/open-dot-emacs))
+        ('OpenDotBashrc (my/utils/open-dot-bashrc)))
 
       t))
 
@@ -1381,11 +1387,20 @@
         (delete-region (point-min) (point-max))
         (insert result)))))
 
+(defun my/utils/open-file (filename)
+  (-let [absolute-filename (expand-file-name filename)]
+    (if (not (file-exists-p absolute-filename))
+        (error "Error! Your `%s' file doesn not exists!" absolute-filename)
+      (find-file absolute-filename))))
+
 (defun my/utils/open-all-org ()
-  (-let [filename (expand-file-name "~/Dropbox/sync/development/all.org")]
-    (if (not (file-exists-p filename))
-        (error "Error! Your all.org file doesn not exists!")
-      (find-file filename))))
+  (my/utils/open-file "~/Dropbox/sync/development/all.org"))
+
+(defun my/utils/open-dot-emacs ()
+  (my/utils/open-file "~/.emacs"))
+
+(defun my/utils/open-dot-bashrc ()
+  (my/utils/open-file "~/.bashrc"))
 
 (defun my/utils/kill-word ()
   (interactive)
