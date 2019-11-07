@@ -1426,6 +1426,11 @@
   (when kill-ring
     (setq kill-ring (cdr kill-ring))))
 
+(defun my/utils/create-scratch-buffer ()
+   (interactive)
+   (switch-to-buffer (get-buffer-create "*scratch*"))
+   (lisp-interaction-mode))
+
 (provide '.emacs)
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
