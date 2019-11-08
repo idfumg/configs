@@ -866,7 +866,7 @@ $FLASK_LOGIN_USAGE
 $FLASK_DEFAULT_TREE
 $SQLALCHEMY_TUTORIAL_EXAMPLES"
 
-github_pull() {
+github_initiate() {
     local GITHUB_DIR=$HOME/1/github
 
     echo "Copying repositories into $GITHUB_DIR ..." && echo
@@ -878,6 +878,25 @@ github_pull() {
     done
 
     cd -
+    echo && echo "Done"
+}
+
+github_pull() {
+    local GITHUB_DIR=$HOME/1/github
+
+    initial_dir = pwd
+
+    echo "Update repositories in $GITHUB_DIR ..." && echo
+    mkdir -p $GITHUB_DIR && cd $GITHUB_DIR
+
+    for repo in `ls`; do
+        echo "Updating $repo"
+        cd $repo
+        git pull -q
+        cd -
+    done
+
+    cd $initial_dir
     echo && echo "Done"
 }
 
