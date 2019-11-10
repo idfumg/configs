@@ -1040,11 +1040,19 @@
             (menu-open-all-org (popup-make-item "open-all-org" :value 'OpenAllOrg))
             (menu-open-dot-emacs (popup-make-item "open-dot-emacs" :value 'OpenDotEmacs))
             (menu-open-dot-bashrc (popup-make-item "open-dot-bashrc" :value 'OpenDotBashrc))
+            (menu-open-synopsis-python (popup-make-item "open-synopsis-python" :value 'OpenSynopsisPython))
+            (menu-open-synopsis-js (popup-make-item "open-synopsis-js" :value 'OpenSynopsisJS))
+            (menu-open-synopsis-lua (popup-make-item "open-synopsis-lua" :value 'OpenSynopsisLua))
+            (menu-open-synopsis-elixir (popup-make-item "open-synopsis-elixir" :value 'OpenSynopsisElixir))
 
             (menu-utils (list "utils"
                               menu-open-all-org
                               menu-open-dot-emacs
                               menu-open-dot-bashrc
+                              menu-open-synopsis-python
+                              menu-open-synopsis-js
+                              menu-open-synopsis-lua
+                              menu-open-synopsis-elixir
                               menu-kill-all-other-buffers
                               menu-sudo-open-file
                               menu-system-monitor
@@ -1100,7 +1108,12 @@
         ('FilterBufferContents (call-interactively 'my/utils/filter-buffer-contents))
         ('OpenAllOrg (my/utils/open-all-org))
         ('OpenDotEmacs (my/utils/open-dot-emacs))
-        ('OpenDotBashrc (my/utils/open-dot-bashrc)))
+        ('OpenDotBashrc (my/utils/open-dot-bashrc))
+        ('OpenSynopsisPython (my/utils/open-synopsis-python))
+        ('OpenSynopsisJS (my/utils/open-synopsis-js))
+        ('OpenSynopsisLua (my/utils/open-synopsis-lua))
+        ('OpenSynopsisElixir (my/utils/open-synopsis-elixir))
+        )
 
       t))
 
@@ -1401,6 +1414,18 @@
 
 (defun my/utils/open-dot-bashrc ()
   (my/utils/open-file "~/.bashrc"))
+
+(defun my/utils/open-synopsis-python ()
+  (my/utils/open-file "~/1/github/PythonSynopsis/synopsis.py"))
+
+(defun my/utils/open-synopsis-js ()
+  (my/utils/open-file "~/1/github/JavaScriptSynopsis/1.js"))
+
+(defun my/utils/open-synopsis-lua ()
+  (my/utils/open-file "~/1/github/LuaSynopsis/1.lua"))
+
+(defun my/utils/open-synopsis-elixir ()
+  (my/utils/open-file "~/1/github/ElixirSynopsis/learn/common/0.ex"))
 
 (defun my/utils/kill-word ()
   (interactive)
