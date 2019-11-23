@@ -118,7 +118,7 @@ fi
 
 export PLATFORM=m64
 
-. ~/.env
+[ -r ~/.env ] && . ~/.env
 
 # Example of the `.env` file
 
