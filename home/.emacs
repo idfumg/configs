@@ -503,6 +503,25 @@
   ;; -I/usr/lib/clang/3.8.1/include
   ;; -I/usr/local/include
 
+  (defun my/setup/c++/is-c++-mode? ()
+    (eq 'c++-mode major-mode))
+
+  (defun my/setup/c++/compile ()
+    (interactive)
+
+    (unless (my/setup/c++/is-c++-mode?)
+      (error "Error! You are not in the c++-mode!"))
+
+    (-let* ((current-directory (file-name-directory (buffer-file-name)))
+            (cmd (format "g++ -std=c++17 -Wall %s && time./a.out" (buffer-file-name))))
+      (compile (format "g++ -std=c++17 -Wall %s && time ./a.out" (buffer-file-name)))
+      (cd current-directory)))
+
+  (defun my/setup/c++/compilation-finished-hook (buffer msg)
+    (if (s-contains? "finished" msg)
+        (my/tooltip/show "\n Compilation successful :-) \n" "green")
+      (my/tooltip/show "\n Compilation failed :-( \n" "red")))
+
   (defun my/setup/sirena ()
     (defun my/sirena/redmine/cut-tasks-names (start end)
       (interactive "r")
@@ -559,12 +578,9 @@
       (unless (my/sirena/in-project-now?)
         (error "Error! You are not in the sirena project! (%s)" buffer-file-name))
 
-      (-let* ((current-directory (file-name-directory (buffer-file-name)))
-              (svn-root (my/vc/get-root current-directory)))
+      (-let* ((svn-root (my/vc/get-root current-directory)))
         (cd svn-root)
-        (cd compilation-dir)
-        (compile cmd)
-        (cd current-directory)))
+        (my/setup/c++/compile)))
 
     (defun my/sirena/run-tests (domain &optional test-name)
       (-let [test-name (if (null test-name)
@@ -624,12 +640,14 @@
       (interactive)
       (my/sirena/make-in "sirenalibs/serverlib" "make -sj12"))
 
-    (defun my/sirena/compilation-finished-hook (buffer msg)
-      (if (s-contains? "finished" msg)
-          (progn
-            (kill-buffer buffer)
-            (my/tooltip/show "\n Compilation successful :-) \n" "green"))
-        (my/tooltip/show "\n Compilation failed :-( \n" "red")))
+    (defun my/sirena/c++/compilation-finished-hook (buffer msg)
+      (my/setup/c++/compilation-finished-hook buffer msg)
+      (kill-buffer buffer))
+
+    (defun my/buffer/ansi-colorize ()
+      (require 'ansi-color)
+      (let ((buffer-read-only nil))
+        (ansi-color-apply-on-region (point-min) (point-max))))
 
     ;; (-let [sirena-env-vars '(("ORACLE_BASE" . "/u01/app/oracle")
     ;;                          ("ORACLE_HOME" . "/u01/app/oracle/product/12.1.0/db_1")
@@ -641,16 +659,33 @@
     ;;                          ("SVN_SSH" . "ssh -i /home/idfumg/.ssh/id_rsa -l svn")
     ;;                          ("SVN_BASE" . "svn+ssh://svn/SVNroot/sirena"))]
 
-      (when (my/sirena/in-project-now?)
-        (setq tooltip-hide-delay 2)
-        (setq compilation-ask-about-save nil)
-        (add-to-list 'compilation-finish-functions 'my/sirena/compilation-finished-hook)
-        (global-set-key [(control ?x) ?m] 'my/sirena/rail-make)
-        (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'cp866)))
-        (add-hook 'shell-mode-hook (lambda () (prefer-coding-system 'cp866)))))
-        ;; (-each sirena-env-vars (lambda (item) (setenv (car item) (cdr item))))
-        ;; (my/shell/add-to-env "PATH" (cdr (assoc "ORACLE_BIN" sirena-env-vars)))
-        ;; (my/shell/add-to-env "LD_LIBRARY_PATH" (cdr (assoc "ORACLE_LIB" sirena-env-vars))))))
+    (when (my/setup/c++/is-c++-mode?)
+      (setq tooltip-hide-delay 2)
+      (setq compilation-ask-about-save nil)
+      (add-to-list 'compilation-finish-functions 'my/setup/c++/compilation-finished-hook)
+      (global-set-key [(control ?x) ?m] 'my/setup/c++/compile)
+      (add-hook 'compilation-filter-hook 'my/buffer/ansi-colorize)
+      (add-hook 'shell-filter-hook 'my/buffer/ansi-colorize)
+      (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'utf-8-unix)))
+      (add-hook 'shell-mode-hook (lambda () (prefer-coding-system 'utf-8-unix)))
+      )
+
+    (when (my/sirena/in-project-now?)
+      (setq tooltip-hide-delay 2)
+      (setq compilation-ask-about-save nil)
+      (add-to-list 'compilation-finish-functions 'my/sirena/c++/compilation-finished-hook)
+      (global-set-key [(control ?x) ?m] 'my/sirena/rail-make)
+      (add-hook 'compilation-filter-hook 'my/buffer/ansi-colorize)
+      (add-hook 'shell-filter-hook 'my/buffer/ansi-colorize)
+      (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'cp866)))
+      (add-hook 'shell-mode-hook (lambda () (prefer-coding-system 'cp866)))
+      )
+
+    )
+
+  ;; (-each sirena-env-vars (lambda (item) (setenv (car item) (cdr item))))
+  ;; (my/shell/add-to-env "PATH" (cdr (assoc "ORACLE_BIN" sirena-env-vars)))
+  ;; (my/shell/add-to-env "LD_LIBRARY_PATH" (cdr (assoc "ORACLE_LIB" sirena-env-vars))))))
 
   (defun my/c-mode-hook()
     (c-add-style "mycodingstyle"
@@ -748,9 +783,9 @@
 (defun my/setup/encoding ()
   (setq-default default-input-method 'russian-computer)
   (set-language-environment 'UTF-8)
-  (prefer-coding-system 'cp866)
+  ;; (prefer-coding-system 'cp866)
   (prefer-coding-system 'utf-8-unix)
-  ;; (set-default-coding-systems 'cp866)
+  (set-default-coding-systems 'utf-8-unix)
   )
 
 (defun my/setup/highlight ()
@@ -1142,13 +1177,13 @@
   (require 'dash)
   (my/setup/misc)
   (my/setup/modes)
+  (my/setup/encoding)
   (if (display-graphic-p) (my/setup/theme) (my/setup/theme-console))
   (my/setup/c++)
   (my/setup/python)
   (my/setup/browser)
   (my/setup/org)
   (my/setup/command-history)
-  (my/setup/encoding)
   (my/setup/highlight)
   (my/setup/text-mode)
   (my/setup/system-monitor)
@@ -1475,3 +1510,4 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+(put 'downcase-region 'disabled nil)
