@@ -135,7 +135,7 @@ export PLATFORM=m64
 # export DOT_ENV_SIRENA_PATH_TRUNK=${DOT_ENV_SIRENA_PATH}/trunk
 # export DOT_ENV_SIRENA_PATH_STABLE=${DOT_ENV_SIRENA_PATH}/stable
 # export DOT_ENV_SIRENA_PATH_DOCKER=/sirena_src
-# export DOT_ENV_SIRENA_CPU_COUNT=7
+# export DOT_ENV_SIRENA_CPU_COUNT=10
 # export DOT_ENV_SIRENA_ORACLE_BASE=/u01/app/oracle
 # export DOT_ENV_SIRENA_ORACLE_HOME=${ORACLE_BASE}/product/12.2.0/db_1
 # export DOT_ENV_SIRENA_ORACLE_SID=orcl
@@ -164,7 +164,7 @@ export SIRENA_PATH=${DOT_ENV_SIRENA_PATH:-}
 export SIRENA_PATH_TRUNK=${DOT_ENV_SIRENA_PATH_TRUNK:-}
 export SIRENA_PATH_STABLE=${DOT_ENV_SIRENA_PATH_STABLE:-}
 export SIRENA_PATH_DOCKER=${DOT_ENV_SIRENA_PATH_DOCKER:-}
-export SIRENA_CPU_COUNT=${DOT_ENV_SIRENA_CPU_COUNT:-4}
+export SIRENA_CPU_COUNT=${DOT_ENV_SIRENA_CPU_COUNT:-10}
 export ORACLE_BASE=${DOT_ENV_SIRENA_ORACLE_BASE:-}
 export ORACLE_HOME=${DOT_ENV_SIRENA_ORACLE_HOME:-}
 export ORACLE_SID=${DOT_ENV_SIRENA_ORACLE_SID:-}
@@ -477,6 +477,10 @@ sirena_make() {
 
 sirena_make_libs() {
     sirena_exec "cd ${SIRENA_PATH_DOCKER}/sirenalibs && make -sj ${SIRENA_CPU_COUNT} $@"
+}
+
+sirena_make_serverlib() {
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/sirenalibs/serverlib && make -sj ${SIRENA_CPU_COUNT} $@"
 }
 
 sirena_make_obrzap() {

@@ -503,19 +503,20 @@
   ;; -I/usr/lib/clang/3.8.1/include
   ;; -I/usr/local/include
 
+  (defun my/setup/shell-command (cmd)
+    (compile cmd))
+
   (defun my/setup/c++/is-c++-mode? ()
     (eq 'c++-mode major-mode))
 
-  (defun my/setup/c++/compile ()
+  (defun my/setup/c++/compile (&optional command)
     (interactive)
 
     (unless (my/setup/c++/is-c++-mode?)
       (error "Error! You are not in the c++-mode!"))
 
-    (-let* ((current-directory (file-name-directory (buffer-file-name)))
-            (cmd (format "g++ -std=c++17 -Wall %s && time./a.out" (buffer-file-name))))
-      (compile (format "g++ -std=c++17 -Wall %s && time ./a.out" (buffer-file-name)))
-      (cd current-directory)))
+    (-let* ((cmd (or command (format "g++ -std=c++17 -Wall %s && time ./a.out" (buffer-file-name)))))
+      (compile cmd)))
 
   (defun my/setup/c++/compilation-finished-hook (buffer msg)
     (if (s-contains? "finished" msg)
@@ -578,9 +579,7 @@
       (unless (my/sirena/in-project-now?)
         (error "Error! You are not in the sirena project! (%s)" buffer-file-name))
 
-      (-let* ((svn-root (my/vc/get-root current-directory)))
-        (cd svn-root)
-        (my/setup/c++/compile)))
+      (compile cmd))
 
     (defun my/sirena/run-tests (domain &optional test-name)
       (-let [test-name (if (null test-name)
@@ -588,57 +587,53 @@
                          (s-concat "." test-name))]
         (my/sirena/make-in "src" (s-concat "XP_LIST=" domain test-name " make xp-tests"))))
 
-    (defun my/sirena/rail-tests ()
-      (interactive)
-      (my/sirena/run-tests "rail"))
-
-    (defun my/sirena/rail-test (test-name)
+    (defun my/sirena/rail-tests (&optional test-name)
       (interactive "MTest name: ")
-      (my/sirena/run-tests "rail" test-name))
+      (my/setup/shell-command (format "sirena_test_rail %s" (or test-name ""))))
 
     (defun my/sirena/posauth-test ()
       (interactive)
-      (my/sirena/run-tests "pos_auth"))
+      (my/setup/shell-command "sirena_test_posauth"))
 
     (defun my/sirena/airimp-test ()
       (interactive)
-      (my/sirena/run-tests "airimp"))
+      (my/setup/shell-command "sirena_test_airimp"))
 
     (defun my/sirena/emd-test ()
       (interactive)
-      (my/sirena/run-tests "emd"))
+      (my/setup/shell-command "sirena_test_emd"))
 
     (defun my/sirena/obrzap-make ()
       (interactive)
-      (my/sirena/make-in "src" "make -sj12"))
+      (my/setup/shell-command "sirena_make_obrzap"))
 
     (defun my/sirena/rail-make ()
       (interactive)
-      (my/sirena/make-in "src/rail" "sirena_make_rail"))
+      (my/setup/shell-command "sirena_make_rail"))
 
     (defun my/sirena/rail-rebuild ()
       (interactive)
-      (my/sirena/make-in "src/rail" "make clean && make -sj12"))
+      (my/sirena/make-in "sirena_clean_rail && sirena_make_rail && sirena_make_obrzap"))
 
     (defun my/sirena/posauth-make ()
       (interactive)
-      (my/sirena/make-in "src/pos_auth" "make -sj12"))
+      (my/setup/shell-command "sirena_make_posauth"))
 
     (defun my/sirena/airimp-make ()
       (interactive)
-      (my/sirena/make-in "src/airimp" "make -sj12"))
+      (my/setup/shell-command "sirena_make_airimp"))
 
     (defun my/sirena/emd-make ()
       (interactive)
-      (my/sirena/make-in "src/emd" "make -sj12"))
+      (my/setup/shell-command "sirena_make_emd"))
 
     (defun my/sirena/sirenalibs-make ()
       (interactive)
-      (my/sirena/make-in "sirenalibs" "make -sj12"))
+      (my/setup/shell-command "sirena_make_libs"))
 
     (defun my/sirena/serverlib-make ()
       (interactive)
-      (my/sirena/make-in "sirenalibs/serverlib" "make -sj12"))
+      (my/setup/shell-command "sirena_make_serverlib"))
 
     (defun my/sirena/c++/compilation-finished-hook (buffer msg)
       (my/setup/c++/compilation-finished-hook buffer msg)
@@ -675,6 +670,7 @@
       (setq compilation-ask-about-save nil)
       (add-to-list 'compilation-finish-functions 'my/sirena/c++/compilation-finished-hook)
       (global-set-key [(control ?x) ?m] 'my/sirena/rail-make)
+      (global-set-key [(control ?x) ?t] 'my/sirena/rail-tests)
       (add-hook 'compilation-filter-hook 'my/buffer/ansi-colorize)
       (add-hook 'shell-filter-hook 'my/buffer/ansi-colorize)
       (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'cp866)))
