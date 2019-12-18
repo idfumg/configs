@@ -278,6 +278,7 @@ sirena_start_docker() {
            -v $LOCAL_DB_DATA/oracle:$ORACLE_DATA \
            -v $LOCAL_DB_DATA/postgresql:$POSTGRESQL_DATA \
            sirena/dev sh -c "trap : TERM INT; sleep infinity & wait"
+    #sirena_exec_user root:root "hostname idfumg"
 }
 
 sirena_stop_docker() {
