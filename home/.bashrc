@@ -321,7 +321,7 @@ sirena_data_oracle() {
 
 sirena_start_oracle() {
     sirena_oracle_command "startup;"
-    sirena_oracle_command "ALTER USER SYSTEM IDENTIFIED BY MANAGER ACCOUNT UNLOCK;"
+    sirena_oracle_command "ALTER USER system IDENTIFIED BY manager ACCOUNT UNLOCK;"
     sirena_oracle_command "ALTER SYSTEM SET open_cursors = 2500 SCOPE=BOTH;"
 }
 
