@@ -515,7 +515,7 @@
     (unless (my/setup/c++/is-c++-mode?)
       (error "Error! You are not in the c++-mode!"))
 
-    (-let* ((cmd (or command (format "g++ -std=c++17 -Wall %s && time ./a.out" (buffer-file-name)))))
+    (-let* ((cmd (or command (format "g++ -O3 -std=c++17 -Wall %s && time ./a.out" (buffer-file-name)))))
       (compile cmd)))
 
   (defun my/setup/c++/compilation-finished-hook (buffer msg)
