@@ -515,8 +515,40 @@
     (unless (my/setup/c++/is-c++-mode?)
       (error "Error! You are not in the c++-mode!"))
 
-    (-let* ((cmd (or command (format "g++ -O3 -std=c++17 -Wall %s && time ./a.out" (buffer-file-name)))))
-      (compile cmd)))
+    (compile command))
+
+  (defun my/setup/c++/compile-debug (&optional command)
+    (interactive)
+
+    (-let* ((options '("-Werror"
+                       "-Wall"
+                       "-Wno-unused-result"
+                       "-Wshadow"
+                       "-pedantic"
+                       "-fsanitize=address"
+                       "-fsanitize=undefined"
+                       "-D_GLIBCXX_DEBUG"
+                       "-g"
+                       "-O3"
+                       "-std=c++17"))
+            (compiler "${CXX}")
+            (command (format "%s %s %s && time ./a.out"
+                             compiler
+                             (mapconcat 'identity options " ")
+                             (buffer-file-name))))
+      (my/setup/c++/compile command)))
+
+  (defun my/setup/c++/compile-performance (&optional command)
+    (interactive)
+
+    (-let* ((options '("-O3"
+                       "-std=c++17"))
+            (compiler "${CXX}")
+            (command (format "%s %s %s && time ./a.out"
+                             compiler
+                             (mapconcat 'identity options " ")
+                             (buffer-file-name))))
+      (my/setup/c++/compile command)))
 
   (defun my/setup/c++/compilation-finished-hook (buffer msg)
     (if (s-contains? "finished" msg)
