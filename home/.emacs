@@ -127,11 +127,16 @@
           (message "Install package %s" package)
           (package-install package))))))
 
-(defun my/setup/font-size ()
+(defun my/env/load ()
   (require 'load-env-vars)
+  (message "Loading environment variables")
   (let ((envfile (expand-file-name "~/.env")))
     (if (file-exists-p envfile)
-        (load-env-vars envfile)))
+        (load-env-vars envfile)
+      (error "Error! .env file does not exist!"))))
+
+(defun my/setup/font-size ()
+  (my/env/load)
   (let ((font-size-default "110")
         (font-size-env (or (getenv "EMACS_FONT_SIZE") (getenv "DOT_ENV_EMACS_FONT_SIZE"))))
     (setq font-size (string-to-number (or font-size-env font-size-default)))))
@@ -515,40 +520,70 @@
     (unless (my/setup/c++/is-c++-mode?)
       (error "Error! You are not in the c++-mode!"))
 
+    (my/env/load)
+
     (compile command))
+
+  (defun my/setup/c++/form-compilation-command (options)
+    (my/env/load)
+
+    (-let* ((compiler (getenv "CXX"))
+            (standard "-std=c++17")
+            (command (format "%s %s %s %s && time ./a.out"
+                             compiler
+                             (mapconcat 'identity options " ")
+                             standard
+                             (buffer-file-name))))
+      command))
 
   (defun my/setup/c++/compile-debug (&optional command)
     (interactive)
 
-    (-let* ((options '("-Werror"
-                       "-Wall"
-                       "-Wno-unused-result"
-                       "-Wshadow"
-                       "-pedantic"
-                       "-fsanitize=address"
-                       "-fsanitize=undefined"
-                       "-D_GLIBCXX_DEBUG"
-                       "-g"
-                       "-O3"
-                       "-std=c++17"))
-            (compiler "${CXX}")
-            (command (format "%s %s %s && time ./a.out"
-                             compiler
-                             (mapconcat 'identity options " ")
-                             (buffer-file-name))))
-      (my/setup/c++/compile command)))
+    (-let [options '("-fsanitize=address"
+                     "-fsanitize=undefined"
+                     "-fno-sanitize-recover=all"
+                     "-D_GLIBCXX_DEBUG"
+                     "-D_GLIBCXX_DEBUG_PEDANTIC"
+                     "-D_FORTIFY_SOURCE=2"
+                     "-Wno-macro-redefined" ;; It complains to D_FORTIFY_SOURCE redefining
+                     "-fstack-protector"
+                     "-Og"
+                     "-g")]
+      (my/setup/c++/compile (my/setup/c++/form-compilation-command options))))
+
+  (defun my/setup/c++/compile-pedantic (&optional command)
+    (interactive)
+
+    (-let [options '("-Werror"
+                     "-Wall"
+                     "-Wno-unused-result"
+                     "-Wshadow"
+                     "-Wformat=2"
+                     "-Wfloat-equal"
+                     ;;"-Wsign-conversion"
+                     "-Wshift-overflow"
+                     "-Wdouble-promotion"
+                     "-pedantic-errors"
+                     "-pedantic"
+                     "-Wold-style-cast"
+                     "-Wextra"
+                     "-ansi"
+                     "-Weffc++"
+                     "-Wstrict-aliasing"
+                     "-fno-rtti"
+                     "-Wnull-dereference"
+                     "-Wnonnull"
+                     "-Wimplicit-fallthrough"
+                     "-Winit-self"
+                     "-g"
+                     "-O3")]
+      (my/setup/c++/compile (my/setup/c++/form-compilation-command options))))
 
   (defun my/setup/c++/compile-performance (&optional command)
     (interactive)
 
-    (-let* ((options '("-O3"
-                       "-std=c++17"))
-            (compiler "${CXX}")
-            (command (format "%s %s %s && time ./a.out"
-                             compiler
-                             (mapconcat 'identity options " ")
-                             (buffer-file-name))))
-      (my/setup/c++/compile command)))
+    (-let [options '("-O3")]
+      (my/setup/c++/compile (my/setup/c++/form-compilation-command options))))
 
   (defun my/setup/c++/compilation-finished-hook (buffer msg)
     (if (s-contains? "finished" msg)
@@ -727,8 +762,9 @@
       (setq tooltip-hide-delay 2)
       (setq compilation-ask-about-save nil)
       (add-to-list 'compilation-finish-functions 'my/setup/c++/compilation-finished-hook)
-      (global-set-key [(control ?x) ?m] 'my/setup/c++/compile-debug)
-      (global-set-key [(control ?x) ?p] 'my/setup/c++/compile-performance)
+      (global-set-key [(control ?x) ?l] 'my/setup/c++/compile-debug)
+      (global-set-key [(control ?x) ?p] 'my/setup/c++/compile-pedantic)
+      (global-set-key [(control ?x) ?m] 'my/setup/c++/compile-performance)
       (add-hook 'compilation-filter-hook 'my/buffer/ansi-colorize)
       (add-hook 'shell-filter-hook 'my/buffer/ansi-colorize)
       (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'utf-8-unix)))
