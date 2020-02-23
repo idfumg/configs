@@ -1162,6 +1162,7 @@
             (menu-shorten-url (popup-make-item "shorten-url" :value 'ShortenUrl))
             (menu-filter-buffer-contents (popup-make-item "filter-buffer-contents" :value 'FilterBufferContents))
             (menu-open-all-org (popup-make-item "open-all-org" :value 'OpenAllOrg))
+            (menu-open-algos (popup-make-item "open-algos" :value 'OpenAlgos))
             (menu-open-dot-emacs (popup-make-item "open-dot-emacs" :value 'OpenDotEmacs))
             (menu-open-dot-bashrc (popup-make-item "open-dot-bashrc" :value 'OpenDotBashrc))
             (menu-open-synopsis-python (popup-make-item "open-synopsis-python" :value 'OpenSynopsisPython))
@@ -1171,6 +1172,7 @@
 
             (menu-utils (list "utils"
                               menu-open-all-org
+                              menu-open-algos
                               menu-open-dot-emacs
                               menu-open-dot-bashrc
                               menu-open-synopsis-python
@@ -1231,6 +1233,7 @@
         ('ShortenUrl (call-interactively 'my/utils/shorten-url))
         ('FilterBufferContents (call-interactively 'my/utils/filter-buffer-contents))
         ('OpenAllOrg (my/utils/open-all-org))
+        ('OpenAlgos (my/utils/open-algos))
         ('OpenDotEmacs (my/utils/open-dot-emacs))
         ('OpenDotBashrc (my/utils/open-dot-bashrc))
         ('OpenSynopsisPython (my/utils/open-synopsis-python))
@@ -1532,6 +1535,9 @@
 
 (defun my/utils/open-all-org ()
   (my/utils/open-file "~/Dropbox/sync/development/all.org"))
+
+(defun my/utils/open-algos ()
+  (my/utils/open-file "~/Dropbox/sync/development/sources/hackerrank/utils.hpp"))
 
 (defun my/utils/open-dot-emacs ()
   (my/utils/open-file "~/.emacs"))
