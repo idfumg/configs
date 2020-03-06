@@ -619,17 +619,17 @@
 
     (defun my/sirena/open-trunk ()
       (interactive)
-      (-let [path (expand-file-name (getenv "DOT_ENV_SIRENA_PATH_TRUNK"))]
+      (-let [path (expand-file-name (getenv "DOT_ENV_SIRENA_PATH"))]
         (message path)
         (if path
-            (find-file (s-concat path "/src/rail/rail_order.cc"))
+            (find-file (s-concat path "/trunk/src/rail/rail_order.cc"))
           (error "Error! No sirena trunk located!"))))
 
     (defun my/sirena/open-stable ()
       (interactive)
-      (-let [path (expand-file-name (getenv "DOT_ENV_SIRENA_PATH_STABLE"))]
+      (-let [path (expand-file-name (getenv "DOT_ENV_SIRENA_PATH"))]
         (if path
-            (find-file (s-concat path "/src/rail/rail_order.cc"))
+            (find-file (s-concat path "/stable/src/rail/rail_order.cc"))
           (error "Error! No sirena stable located!")))))
 
   (defun my/sirena/hook ()
