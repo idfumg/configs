@@ -148,7 +148,7 @@ export DOT_ENV_SIRENA_ORACLE_INVENTORY=${ORACLE_HOME}/inventory
 export DOT_ENV_SIRENA_ORACLE_PATH=${ORACLE_HOME}/bin
 export DOT_ENV_SIRENA_ORACLE_LD_LIBRARY_PATH=${ORACLE_HOME}/lib
 export DOT_ENV_SIRENA_ORACLE_NLS_LANG=AMERICAN_CIS.RU8PC866
-export DOT_ENV_SIRENA_SVN_SSH='ssh -i ${HOME}/.ssh/id_rsa -l svn'
+export DOT_ENV_SIRENA_SVN_SSH='ssh -i ~/.ssh/id_rsa -l svn'
 export DOT_ENV_SIRENA_SVN_BASE='svn+ssh://svn/SVNroot/sirena'
 
 ################################################################################
@@ -185,7 +185,7 @@ export CC=${C_COMPILER}
 export CXX=${CXX_COMPILER}
 export LOCAL_CC=${C_COMPILER}
 export LOCAL_CXX=${CXX_COMPILER}
-export PATH=${HOME}/bin:${PATH}
+export PATH=~/bin:${PATH}
 export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
 
 ################################################################################
@@ -266,7 +266,7 @@ sirena_sqw() {
 sirena_start_docker() {
     local POSTGRESQL_DATA=/var/lib/postgresql/10/main
     local ORACLE_DATA=$ORACLE_BASE/oradata
-    local LOCAL_DB_DATA=$HOME/1/work/db
+    local LOCAL_DB_DATA=~/1/work/db
     local STORAGE="storage.komtex:10.1.90.152"
     local SVN="svn.komtex:10.1.90.222"
 
@@ -406,7 +406,7 @@ sirena_init_oracle() {
 
 sirena_init_docker() {
     local POSTGRESQL_DATA=/var/lib/postgresql/10/main
-    local LOCAL_DB_DATA=$HOME/1/work/db
+    local LOCAL_DB_DATA=~/1/work/db
 
     docker run \
            --network host \
