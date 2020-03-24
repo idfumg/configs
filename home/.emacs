@@ -73,14 +73,6 @@
     (unless (my/utils/is-common-project-encoding?)
       (my/utils/setup-encodings (my/utils/common-project-encoding)))))
 
-(defun my/buffer/ansi-colorize ()
-  (require 'ansi-color)
-  (let ((buffer-read-only nil))
-    (ansi-color-apply-on-region (point-min) (point-max))))
-
-(add-hook 'shell-mode-hook 'my/buffer/ansi-colorize)
-(add-hook 'shell-filter-hook 'my/buffer/ansi-colorize)
-
 (defun my/setup/packages ()
   (unless (require 'package)
     (error "Error! Can't find 'package!"))
