@@ -186,7 +186,7 @@ export CXX=${CXX_COMPILER}
 export LOCAL_CC=${C_COMPILER}
 export LOCAL_CXX=${CXX_COMPILER}
 export PATH=~/bin:${PATH}
-export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
+#export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
 
 ################################################################################
 # Aliases

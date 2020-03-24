@@ -73,6 +73,14 @@
     (unless (my/utils/is-common-project-encoding?)
       (my/utils/setup-encodings (my/utils/common-project-encoding)))))
 
+(defun my/buffer/ansi-colorize ()
+  (require 'ansi-color)
+  (let ((buffer-read-only nil))
+    (ansi-color-apply-on-region (point-min) (point-max))))
+
+(add-hook 'shell-mode-hook 'my/buffer/ansi-colorize)
+(add-hook 'shell-filter-hook 'my/buffer/ansi-colorize)
+
 (defun my/setup/packages ()
   (unless (require 'package)
     (error "Error! Can't find 'package!"))
@@ -344,9 +352,7 @@
    :percent-position-color "gray50"
    :filename-color "dark goldenrod"
    :major-mode-color "gray50"
-   :minor-mode-color "gray50"
-   :background "black"
-   :foreground "white")
+   :minor-mode-color "gray50")
 
   (my/setup/font)
 
@@ -372,7 +378,7 @@
    :major-mode-color "dark goldenrod"
    :minor-mode-color "dark goldenrod"
    :background-color "black"
-   :foreground-color "dark goldenrod")
+   :foreground-color "black")
 
   (my/setup/font)
 
