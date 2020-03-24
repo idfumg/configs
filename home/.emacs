@@ -1,5 +1,78 @@
 ;; (add-to-list 'load-path "~/.emacs.d")
 
+(defmacro with-system (type &rest body)
+  (declare (indent defun))
+  `(when (eq system-type ',type)
+     ,@body))
+
+(defmacro with-sirena-project (&rest body)
+  (declare (indent defun))
+  `(when (my/sirena/in-project-now?)
+     ,@body))
+
+(defmacro with-common-project (&rest body)
+  (declare (indent defun))
+  `(unless (my/sirena/in-project-now?)
+     ,@body))
+
+(defun my/utils/sirena-encoding ()
+  (cond ((eq system-type 'gnu/linux) 'cp866-unix)
+        t 'cp866))
+
+(defun my/utils/common-project-encoding ()
+  (cond ((eq system-type 'gnu/linux) 'utf-8-unix)
+        t 'utf-8))
+
+(defun my/utils/is-sirena-encoding? ()
+  (eq buffer-file-coding-system (my/utils/sirena-encoding)))
+
+(defun my/utils/is-common-project-encoding? ()
+  (eq buffer-file-coding-system (my/utils/common-project-encoding)))
+
+(defun my/utils/return-t (orig-fun &rest args)
+  t)
+
+(defun my/utils/disable-yornp (orig-fun &rest args)
+  (advice-add 'yes-or-no-p :around #'my/utils/return-t)
+  (advice-add 'y-or-n-p :around #'my/utils/return-t)
+  (let ((res (apply orig-fun args)))
+    (advice-remove 'yes-or-no-p #'my/utils/return-t)
+    (advice-remove 'y-or-n-p #'my/utils/return-t)
+    res))
+
+(defun my/utils/setup-encodings (encoding)
+  ;;(setq default-process-coding-system '(cp866 . cp866))
+  (setq locale-coding-system encoding)
+  (setq set-buffer-process-coding-system encoding)
+  (setq default-buffer-file-coding-system encoding)
+  (setq default-input-method 'russian-computer)
+
+  (prefer-coding-system encoding)
+  (prefer-coding-system 'utf-8-unix)
+
+  (set-language-environment 'UTF-8)
+  (set-default-coding-systems encoding)
+  (set-terminal-coding-system encoding)
+  (set-file-name-coding-system encoding)
+  (set-keyboard-coding-system encoding)
+  (set-selection-coding-system encoding)
+
+  (with-system windows-nt
+    (set-w32-system-coding-system encoding)
+    (setq w32-system-coding-system encoding))
+
+  (advice-add 'revert-buffer-with-coding-system :around #'my/utils/disable-yornp)
+  (revert-buffer-with-coding-system encoding))
+
+(defun my/setup/encodings ()
+  (with-sirena-project
+    (unless (my/utils/is-sirena-encoding?)
+      (my/utils/setup-encodings (my/utils/sirena-encoding))))
+
+  (with-common-project
+    (unless (my/utils/is-common-project-encoding?)
+      (my/utils/setup-encodings (my/utils/common-project-encoding)))))
+
 (defun my/setup/packages ()
   (unless (require 'package)
     (error "Error! Can't find 'package!"))
@@ -133,7 +206,7 @@
   (let ((envfile (expand-file-name "~/.env")))
     (if (file-exists-p envfile)
         (load-env-vars envfile)
-      (error "Error! .env file does not exist!"))))
+      (message "Error! .env file does not exist!"))))
 
 (defun my/setup/font-size ()
   (my/env/load)
@@ -722,31 +795,9 @@
     ;;                          ("SVN_SSH" . "ssh -i /home/idfumg/.ssh/id_rsa -l svn")
     ;;                          ("SVN_BASE" . "svn+ssh://svn/SVNroot/sirena"))]
 
-    (defun my/utils/return-t (orig-fun &rest args)
-      t)
+    (add-hook 'find-file-hook 'my/setup/encodings)
 
-    (defun my/utils/disable-yornp (orig-fun &rest args)
-      (advice-add 'yes-or-no-p :around #'my/utils/return-t)
-      (advice-add 'y-or-n-p :around #'my/utils/return-t)
-      (let ((res (apply orig-fun args)))
-        (advice-remove 'yes-or-no-p #'my/utils/return-t)
-        (advice-remove 'y-or-n-p #'my/utils/return-t)
-        res))
-
-    (advice-add 'revert-buffer-with-coding-system :around #'my/utils/disable-yornp)
-
-    (add-hook 'find-file-hook
-              (lambda ()
-                (when (and (my/sirena/in-project-now?) (not (eq buffer-file-coding-system 'cp866-unix)))
-                  (prefer-coding-system 'cp866)
-                  (set-default-coding-systems 'cp866)
-                  (revert-buffer-with-coding-system 'cp866))
-                (when (and (not (my/sirena/in-project-now?)) (not (eq buffer-file-coding-system 'utf-8-unix)))
-                  (prefer-coding-system 'utf-8-unix)
-                  (set-default-coding-systems 'utf-8-unix)
-                  (revert-buffer-with-coding-system 'utf-8-unix))))
-
-    (when (my/sirena/in-project-now?)
+    (with-sirena-project
       (setq tooltip-hide-delay 2)
       (setq compilation-ask-about-save nil)
       (add-to-list 'compilation-finish-functions 'my/sirena/c++/compilation-finished-hook)
@@ -758,18 +809,19 @@
       (add-hook 'shell-mode-hook (lambda () (prefer-coding-system 'cp866)))
       )
 
-    (when (and (my/setup/c++/is-c++-mode?) (not (my/sirena/in-project-now?)))
-      (setq tooltip-hide-delay 2)
-      (setq compilation-ask-about-save nil)
-      (add-to-list 'compilation-finish-functions 'my/setup/c++/compilation-finished-hook)
-      (global-set-key [(control ?x) ?l] 'my/setup/c++/compile-debug)
-      (global-set-key [(control ?x) ?p] 'my/setup/c++/compile-pedantic)
-      (global-set-key [(control ?x) ?m] 'my/setup/c++/compile-performance)
-      (add-hook 'compilation-filter-hook 'my/buffer/ansi-colorize)
-      (add-hook 'shell-filter-hook 'my/buffer/ansi-colorize)
-      (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'utf-8-unix)))
-      (add-hook 'shell-mode-hook (lambda () (prefer-coding-system 'utf-8-unix)))
-      )
+    (with-common-project
+      (when (my/setup/c++/is-c++-mode?)
+        (setq tooltip-hide-delay 2)
+        (setq compilation-ask-about-save nil)
+        (add-to-list 'compilation-finish-functions 'my/setup/c++/compilation-finished-hook)
+        (global-set-key [(control ?x) ?l] 'my/setup/c++/compile-debug)
+        (global-set-key [(control ?x) ?p] 'my/setup/c++/compile-pedantic)
+        (global-set-key [(control ?x) ?m] 'my/setup/c++/compile-performance)
+        (add-hook 'compilation-filter-hook 'my/buffer/ansi-colorize)
+        (add-hook 'shell-filter-hook 'my/buffer/ansi-colorize)
+        (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'utf-8-unix)))
+        (add-hook 'shell-mode-hook (lambda () (prefer-coding-system 'utf-8-unix)))
+        ))
     )
 
   ;; (-each sirena-env-vars (lambda (item) (setenv (car item) (cdr item))))
