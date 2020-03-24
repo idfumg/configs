@@ -1328,7 +1328,17 @@
   (require 'dash)
   (my/setup/misc)
   (my/setup/modes)
+
+  (my/setup/theme)
+
   (if (display-graphic-p) (my/setup/theme) (my/setup/theme-console))
+
+  (unless window-system
+    (require 'mouse)
+    (xterm-mouse-mode t)
+    (defun track-mouse (e))
+    (setq mouse-sel-mode t))
+
   (my/setup/encoding)
   (my/setup/c++)
   (my/setup/python)
