@@ -531,7 +531,14 @@
   (global-set-key [(control ?c) ?m ?n] 'mc/mark-next-like-this)
   (global-set-key [(control ?c) ?m ?p] 'mc/mark-previous-like-this)
   (global-set-key [(control ?c) ?m ?x] 'mc/mark-lines)
-  (global-set-key [(control return)] 'company-complete))
+  (global-set-key [(control return)] 'company-complete)
+
+  (with-system darwin
+    (setq mac-option-key-is-meta nil)
+    (setq mac-command-key-is-meta t)
+    (setq mac-command-modifier 'meta)
+    (setq mac-option-modifier nil))
+  )
   ;; (global-set-key [(control return)] 'helm-company))
 
 (defun my/setup/c++ ()
@@ -1013,6 +1020,9 @@
   (setq user-mail-address "idfumg@gmail.com")
   (setq visible-bell t)
   (setq imenu-auto-rescan t) ;; Make sure auto automatically rescan for imenu changes
+
+  (with-system darwin
+    (setq mac-command-modifier 'meta))
 
   ;; startup Emacs in the fullscreen
   (add-to-list 'default-frame-alist '(fullscreen . maximized))
