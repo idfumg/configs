@@ -212,7 +212,8 @@
   (my/env/load)
   (let ((font-size-default "110")
         (font-size-env (or (getenv "EMACS_FONT_SIZE") (getenv "DOT_ENV_EMACS_FONT_SIZE"))))
-    (setq font-size (string-to-number (or font-size-env font-size-default)))))
+    (setq font-size (string-to-number (or font-size-env font-size-default))))
+  )
 
 (defun my/setup/mode-line (&rest args)
   (let ((read-only-color (plist-get args :read-only-color))
@@ -326,6 +327,43 @@
      )))
 
 (defun my/setup/font ()
+  ;; https://www.emacswiki.org/emacs/ProblemSettingCertainFaceAttributesFromXResources
+  ;; Loading this patch will make face-attributes inherit, underline,
+  ;; overline and strike-through properly be set up from X11 resources.
+  ;; Values `t', `nil' and facenames must be quoted.
+  ;;
+  ;; code by fledermaus
+  (defun set-face-attribute-from-resource (face attribute resource class frame)
+    "Set FACE's ATTRIBUTE from X resource RESOURCE, class CLASS on FRAME.
+    Value is the attribute value specified by the resource, or nil
+    if not present.  This function displays a message if the resource
+    specifies an invalid attribute."
+    (let* ((face-name (face-name face))
+           (value (internal-face-x-get-resource (concat face-name resource)
+                                                class frame)))
+      (when value
+        (if (and (string-match "^'" value)
+                 (or (eq attribute :inherit       )
+                     (eq attribute :underline     )
+                     (eq attribute :overline      )
+                     (eq attribute :strike-through)))
+            (progn
+              (setq value (intern (substring value 1)))
+              (condition-case ()
+                  (internal-set-lisp-face-attribute
+                   face attribute value frame)
+                (error
+                 (message "Face %s, frame %s: attribute %s %S from XRDB"
+                          face-name frame attribute value))))
+          (setq value (downcase value))
+          (condition-case ()
+              (internal-set-lisp-face-attribute-from-resource
+               face attribute value frame)
+            (error
+             (message "Face %s, frame %s: bad attribute %s %s from X resource"
+                      face-name frame attribute value)))))
+      value))
+
   (set-face-attribute 'default nil
                       ;;:family "Liberation Mono"
                       ;;:family "Ubuntu Mono"
@@ -1660,6 +1698,8 @@
     (term-mode)
     (term-char-mode)
     (switch-to-buffer "*ssh*")))
+
+(face-attribute 'default :font)
 
 (provide '.emacs)
 (custom-set-variables
