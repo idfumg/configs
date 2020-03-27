@@ -894,27 +894,21 @@
   )
 
 (defun my/setup/browser ()
-  (setq-default browse-url-chromium-program "/usr/bin/chromium"
-                browse-url-firefox-program "/usr/bin/firefox"
-                browse-url-generic-program "/usr/bin/firefox"
-                browse-url-browser-function 'browse-url-generic)
+  (with-system gnu/linux
+    (setq browse-url-generic-program "firefox")
+    (setq browse-url-browser-function 'browse-url-generic)
+    (setq my/browser/executable "firefox"))
 
-  (setq my/browser/executable "firefox")
+  (with-system darwin
+    (setq browse-url-browser-function 'browse-url-default-macosx-browser)
+    (setq my/browser/executable "/usr/bin/open -a Safari"))
 
   (defun my/browser/exists? (browser)
     (executable-find browser))
 
-  (defun my/browser/search (search-string)
-    (interactive "MBrowser search: ")
-    (unless (my/browser/exists? my/browser/executable)
-      (error "Error! %s does not exists in exec-path!" my/browser/executable))
-    (shell-command (s-concat my/browser/executable " --search " search-string)))
-
   (defun my/browser/open (url)
     (interactive "MBrowser url: ")
-    (unless (my/browser/exists? my/browser/executable)
-      (error "Error! %s does not exists in exec-path!" my/browser/executable))
-    (shell-command (s-concat my/browser/executable " " url))))
+    (shell-command (s-concat my/browser/executable " http://" url))))
 
 (defun my/setup/org ()
   (setq org-src-fontify-natively t)
@@ -1655,6 +1649,16 @@
    (interactive)
    (switch-to-buffer (get-buffer-create "*scratch*"))
    (lisp-interaction-mode))
+
+(defun my/utils/ssh (user host port)
+  "Connect to a remote host by SSH."
+  (interactive "sUser: \nsHost: \nsPort (default 22): ")
+  (let* ((port (if (equal port "") "22" port))
+         (switches (list host "-l" user "-p" port)))
+    (set-buffer (apply 'make-term "ssh" "ssh" nil switches))
+    (term-mode)
+    (term-char-mode)
+    (switch-to-buffer "*ssh*")))
 
 (provide '.emacs)
 (custom-set-variables
