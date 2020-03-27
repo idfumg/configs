@@ -328,7 +328,8 @@
 (defun my/setup/font ()
   (set-face-attribute 'default nil
                       ;;:family "Liberation Mono"
-                      :family "Ubuntu Mono"
+                      ;;:family "Ubuntu Mono"
+                      :family "Iosevka Fixed"
                       :height font-size
                       :weight 'normal
                       :width 'normal))
