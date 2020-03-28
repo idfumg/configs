@@ -248,36 +248,40 @@
                         :inherit 'face
                         :foreground filename-color
 	                    :weight 'bold
-	                    :height font-size)
+	                    ;; :height font-size
+                        )
 
     (set-face-attribute 'position-face nil
 	                    :inherit 'face
 	                    :foreground position-color
                         :family "Menlo"
 	                    :weight 'bold
-	                    :height font-size)
+	                    ;; :height font-size
+                        )
 
     (set-face-attribute 'major-mode-face nil
                         :inherit 'face
                         :foreground major-mode-color
-	                    :height font-size)
+	                    ;; :height font-size
+                        )
 
     (set-face-attribute 'minor-mode-face nil
                         :inherit 'mode-face
                         :foreground minor-mode-color
-                        :height font-size)
+                        ;; :height font-size
+                        )
 
     (set-face-attribute 'very-long-line-face nil
                         :inherit 'position-face
 	                    :family "Menlo"
 	                    :weight 'bold
-	                    :height font-size
+	                    ;; :height font-size
                         :foreground very-long-line-color
 	                    :background "gray20")
 
     (set-face-attribute 'percent-position-face nil
 	                    :inherit 'position-face
-	                    :height font-size
+	                    ;; :height font-size
 	                    :weight 'bold
                         :foreground percent-position-color)
 
@@ -327,50 +331,57 @@
      )))
 
 (defun my/setup/font ()
-  ;; https://www.emacswiki.org/emacs/ProblemSettingCertainFaceAttributesFromXResources
-  ;; Loading this patch will make face-attributes inherit, underline,
-  ;; overline and strike-through properly be set up from X11 resources.
-  ;; Values `t', `nil' and facenames must be quoted.
-  ;;
-  ;; code by fledermaus
-  (defun set-face-attribute-from-resource (face attribute resource class frame)
-    "Set FACE's ATTRIBUTE from X resource RESOURCE, class CLASS on FRAME.
-    Value is the attribute value specified by the resource, or nil
-    if not present.  This function displays a message if the resource
-    specifies an invalid attribute."
-    (let* ((face-name (face-name face))
-           (value (internal-face-x-get-resource (concat face-name resource)
-                                                class frame)))
-      (when value
-        (if (and (string-match "^'" value)
-                 (or (eq attribute :inherit       )
-                     (eq attribute :underline     )
-                     (eq attribute :overline      )
-                     (eq attribute :strike-through)))
-            (progn
-              (setq value (intern (substring value 1)))
-              (condition-case ()
-                  (internal-set-lisp-face-attribute
-                   face attribute value frame)
-                (error
-                 (message "Face %s, frame %s: attribute %s %S from XRDB"
-                          face-name frame attribute value))))
-          (setq value (downcase value))
-          (condition-case ()
-              (internal-set-lisp-face-attribute-from-resource
-               face attribute value frame)
-            (error
-             (message "Face %s, frame %s: bad attribute %s %s from X resource"
-                      face-name frame attribute value)))))
-      value))
+  ;; http://dpi.lv or xrdb -query
+  ;; ~/.Xdefaults
+  ;; *customization: -color
+  ;; Xcursor.size:   24
+  ;; Xcursor.theme:  DMZ-White
+  ;; Xft.antialias:  true
+  ;; Xft.autohint: true
+  ;; Xft.dpi:    221
+  ;; Xft.hinting:    true
+  ;; Xft.hintstyle:  hintfull
+  ;; Xft.rgba:   rgb
+  ;; Emacs.font: Iosevka
 
-  (set-face-attribute 'default nil
-                      ;;:family "Liberation Mono"
-                      ;;:family "Ubuntu Mono"
-                      :family "Iosevka Fixed"
-                      :height font-size
-                      :weight 'normal
-                      :width 'normal))
+  (defun my/utils/get-current-font ()
+    (face-attribute 'default :font))
+
+  (defun my/utils/print-current-font ()
+    (interactive)
+    (message "%s" (my/utils/get-current-font)))
+
+  (defun my/utils/is-big-screen? ()
+    (when window-system
+      (> (x-display-pixel-width) 2000)))
+
+  (defun my/utils/is-font-exists? (font)
+    (find-font (font-spec :name font)))
+
+  (defun my/utils/find-font ()
+    (let* ((iosevka "Iosevka Fixed")
+           (ubuntu "Ubuntu Mono")
+           (consolas "Consolas")
+           (liberation "Liberation Mono")
+           (is-big-screen? (my/utils/is-big-screen?)))
+      (cond ((my/utils/is-font-exists? iosevka)
+             (if is-big-screen? (s-concat iosevka " 19") (s-concat iosevka " 16")))
+            ((my/utils/is-font-exists? ubuntu)
+             (if is-big-screen? (s-concat ubuntu " 19") (s-concat ubuntu " 16")))
+            ((my/utils/is-font-exists? consolas)
+             (if is-big-screen? (s-concat consolas " 19") (s-concat consolas " 16")))
+            ((my/utils/is-font-exists? liberation)
+             (if is-big-screen? (s-concat liberation " 19") (s-concat liberation " 16")))
+            t nil)))
+
+  (defun my/utils/set-font (font frame)
+    (set-frame-parameter frame 'font (my/utils/find-font)))
+
+  (set-default-font (my/utils/find-font))
+  (my/utils/set-font (my/utils/find-font) nil)
+  (push (lambda (frame) (my/utils/set-font (my/utils/find-font) frame)) after-make-frame-functions)
+
+  (message "Current font: %s" (my/utils/get-current-font)))
 
 (defun my/setup/theme ()
   (load-theme 'solarized-dark t)
@@ -1698,8 +1709,6 @@
     (term-mode)
     (term-char-mode)
     (switch-to-buffer "*ssh*")))
-
-(face-attribute 'default :font)
 
 (provide '.emacs)
 (custom-set-variables
