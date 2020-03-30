@@ -1068,9 +1068,10 @@
   (with-system darwin
     (setq mac-command-modifier 'meta))
 
+  (setq x-select-enable-clipboard t)
+
   ;; startup Emacs in the fullscreen
-  (add-to-list 'default-frame-alist '(fullscreen . maximized))
-  )
+  (add-to-list 'default-frame-alist '(fullscreen . maximized)))
 
 (defun my/setup/helm ()
   (defun my/setup/helm-hook ()
