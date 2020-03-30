@@ -15,32 +15,32 @@
   `(unless (my/sirena/in-project-now?)
      ,@body))
 
-(defun my/utils/sirena-encoding ()
+(defun my/sirena-encoding ()
   (cond ((eq system-type 'gnu/linux) 'cp866-unix)
         t 'cp866))
 
-(defun my/utils/common-project-encoding ()
+(defun my/common-project-encoding ()
   (cond ((eq system-type 'gnu/linux) 'utf-8-unix)
         t 'utf-8))
 
-(defun my/utils/is-sirena-encoding? ()
-  (eq buffer-file-coding-system (my/utils/sirena-encoding)))
+(defun my/is-sirena-encoding? ()
+  (eq buffer-file-coding-system (my/sirena-encoding)))
 
-(defun my/utils/is-common-project-encoding? ()
-  (eq buffer-file-coding-system (my/utils/common-project-encoding)))
+(defun my/is-common-project-encoding? ()
+  (eq buffer-file-coding-system (my/common-project-encoding)))
 
-(defun my/utils/return-t (orig-fun &rest args)
+(defun my/return-t (orig-fun &rest args)
   t)
 
-(defun my/utils/disable-yornp (orig-fun &rest args)
-  (advice-add 'yes-or-no-p :around #'my/utils/return-t)
-  (advice-add 'y-or-n-p :around #'my/utils/return-t)
+(defun my/disable-yornp (orig-fun &rest args)
+  (advice-add 'yes-or-no-p :around #'my/return-t)
+  (advice-add 'y-or-n-p :around #'my/return-t)
   (let ((res (apply orig-fun args)))
-    (advice-remove 'yes-or-no-p #'my/utils/return-t)
-    (advice-remove 'y-or-n-p #'my/utils/return-t)
+    (advice-remove 'yes-or-no-p #'my/return-t)
+    (advice-remove 'y-or-n-p #'my/return-t)
     res))
 
-(defun my/utils/setup-encodings (encoding)
+(defun my/setup-encodings (encoding)
   ;;(setq default-process-coding-system '(cp866 . cp866))
   (setq locale-coding-system encoding)
   (setq set-buffer-process-coding-system encoding)
@@ -61,17 +61,17 @@
     (set-w32-system-coding-system encoding)
     (setq w32-system-coding-system encoding))
 
-  (advice-add 'revert-buffer-with-coding-system :around #'my/utils/disable-yornp)
+  (advice-add 'revert-buffer-with-coding-system :around #'my/disable-yornp)
   (revert-buffer-with-coding-system encoding))
 
 (defun my/setup/encodings ()
   (with-sirena-project
-    (unless (my/utils/is-sirena-encoding?)
-      (my/utils/setup-encodings (my/utils/sirena-encoding))))
+    (unless (my/is-sirena-encoding?)
+      (my/setup-encodings (my/sirena-encoding))))
 
   (with-common-project
-    (unless (my/utils/is-common-project-encoding?)
-      (my/utils/setup-encodings (my/utils/common-project-encoding)))))
+    (unless (my/is-common-project-encoding?)
+      (my/setup-encodings (my/common-project-encoding)))))
 
 (defun my/setup/packages ()
   (unless (require 'package)
@@ -344,44 +344,48 @@
   ;; Xft.rgba:   rgb
   ;; Emacs.font: Iosevka
 
-  (defun my/utils/get-current-font ()
+  (defun my/get-current-font ()
     (face-attribute 'default :font))
 
-  (defun my/utils/print-current-font ()
+  (defun my/print-current-font ()
     (interactive)
-    (message "%s" (my/utils/get-current-font)))
+    (message "%s" (my/get-current-font)))
 
-  (defun my/utils/is-big-screen? ()
-    (when window-system
-      (> (x-display-pixel-width) 2000)))
+  (defun my/get-screen-width ()
+    (if window-system
+        (x-display-pixel-width)
+      (display-pixel-width)))
 
-  (defun my/utils/is-font-exists? (font)
+  (defun my/is-big-screen? ()
+    (> (my/get-screen-width) 2000))
+
+  (defun my/is-font-exists? (font)
     (find-font (font-spec :name font)))
 
-  (defun my/utils/find-font ()
+  (defun my/find-font ()
     (let* ((iosevka "Iosevka Fixed")
            (ubuntu "Ubuntu Mono")
            (consolas "Consolas")
            (liberation "Liberation Mono")
-           (is-big-screen? (my/utils/is-big-screen?)))
-      (cond ((my/utils/is-font-exists? iosevka)
-             (if is-big-screen? (s-concat iosevka " 19") (s-concat iosevka " 16")))
-            ((my/utils/is-font-exists? ubuntu)
-             (if is-big-screen? (s-concat ubuntu " 19") (s-concat ubuntu " 16")))
-            ((my/utils/is-font-exists? consolas)
-             (if is-big-screen? (s-concat consolas " 19") (s-concat consolas " 16")))
-            ((my/utils/is-font-exists? liberation)
-             (if is-big-screen? (s-concat liberation " 19") (s-concat liberation " 16")))
-            t nil)))
+           (is-big-screen? (my/is-big-screen?)))
+      (cond
+       ((my/is-font-exists? iosevka)
+        (if is-big-screen? (s-concat iosevka " 19") (s-concat iosevka " 16")))
+       ((my/is-font-exists? ubuntu)
+        (if is-big-screen? (s-concat ubuntu " 19") (s-concat ubuntu " 16")))
+       ((my/is-font-exists? consolas)
+        (if is-big-screen? (s-concat consolas " 19") (s-concat consolas " 16")))
+       ((my/is-font-exists? liberation)
+        (if is-big-screen? (s-concat liberation " 19") (s-concat liberation " 16")))
+       (t ""))))
 
-  (defun my/utils/set-font (font frame)
-    (set-frame-parameter frame 'font (my/utils/find-font)))
+  (defun my/set-font (font frame)
+    (set-frame-parameter frame 'font (my/find-font)))
 
-  (set-default-font (my/utils/find-font))
-  (my/utils/set-font (my/utils/find-font) nil)
-  (push (lambda (frame) (my/utils/set-font (my/utils/find-font) frame)) after-make-frame-functions)
-
-  (message "Current font: %s" (my/utils/get-current-font)))
+  (set-default-font (my/find-font))
+  (my/set-font (my/find-font) nil)
+  (push (lambda (frame) (my/set-font (my/find-font) frame)) after-make-frame-functions)
+  (message "Current font: %s" (my/get-current-font)))
 
 (defun my/setup/theme ()
   (load-theme 'solarized-dark t)
@@ -395,8 +399,6 @@
    :filename-color "dark goldenrod"
    :major-mode-color "gray50"
    :minor-mode-color "gray50")
-
-  (my/setup/font)
 
   ;; Set cursor color
   (set-cursor-color "gray")
@@ -492,20 +494,20 @@
   (global-set-key [(control ?y)] 'yank)
   (global-set-key [(control ?н)] 'yank)
 
-  (global-set-key [(meta ?k)] 'my/utils/kill-sentence)
-  (global-set-key [(meta ?л)] 'my/utils/kill-sentence)
+  (global-set-key [(meta ?k)] 'my/kill-sentence)
+  (global-set-key [(meta ?л)] 'my/kill-sentence)
 
   (global-set-key [(control ?d)] 'delete-forward-char)
   (global-set-key [(control ?в)] 'delete-forward-char)
 
-  (global-set-key [(meta ?d)] 'my/utils/kill-word)
-  (global-set-key [(meta ?в)] 'my/utils/kill-word)
+  (global-set-key [(meta ?d)] 'my/kill-word)
+  (global-set-key [(meta ?в)] 'my/kill-word)
 
-  (global-set-key [(control backspace)] 'my/utils/backward-kill-word)
-  (global-set-key [(meta backspace)] 'my/utils/backward-kill-word)
+  (global-set-key [(control backspace)] 'my/backward-kill-word)
+  (global-set-key [(meta backspace)] 'my/backward-kill-word)
 
-  (global-set-key [(control ?k)] 'my/utils/kill-line)
-  (global-set-key [(control ?л)] 'my/utils/kill-line)
+  (global-set-key [(control ?k)] 'my/kill-line)
+  (global-set-key [(control ?л)] 'my/kill-line)
 
   (global-set-key [(control meta ?e)] 'end-of-defun)
   (global-set-key [(control meta ?у)] 'end-of-defun)
@@ -835,7 +837,7 @@
       ;;(kill-buffer buffer)
       )
 
-    (defun my/buffer/ansi-colorize ()
+    (defun my/ansi-colorize ()
       (require 'ansi-color)
       (let ((buffer-read-only nil))
         (ansi-color-apply-on-region (point-min) (point-max))))
@@ -858,8 +860,8 @@
       (add-to-list 'compilation-finish-functions 'my/sirena/c++/compilation-finished-hook)
       (global-set-key [(control ?x) ?m] 'my/sirena/rail-make)
       (global-set-key [(control ?x) ?t] 'my/sirena/rail-tests)
-      (add-hook 'compilation-filter-hook 'my/buffer/ansi-colorize)
-      (add-hook 'shell-filter-hook 'my/buffer/ansi-colorize)
+      (add-hook 'compilation-filter-hook 'my/ansi-colorize)
+      (add-hook 'shell-filter-hook 'my/ansi-colorize)
       (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'cp866)))
       (add-hook 'shell-mode-hook (lambda () (prefer-coding-system 'cp866)))
       )
@@ -872,8 +874,8 @@
         (global-set-key [(control ?x) ?l] 'my/setup/c++/compile-debug)
         (global-set-key [(control ?x) ?p] 'my/setup/c++/compile-pedantic)
         (global-set-key [(control ?x) ?m] 'my/setup/c++/compile-performance)
-        (add-hook 'compilation-filter-hook 'my/buffer/ansi-colorize)
-        (add-hook 'shell-filter-hook 'my/buffer/ansi-colorize)
+        (add-hook 'compilation-filter-hook 'my/ansi-colorize)
+        (add-hook 'shell-filter-hook 'my/ansi-colorize)
         (add-hook 'compilation-mode-hook (lambda () (prefer-coding-system 'utf-8-unix)))
         (add-hook 'shell-mode-hook (lambda () (prefer-coding-system 'utf-8-unix)))
         ))
@@ -1327,24 +1329,24 @@
         ('BrowserOpen (call-interactively 'my/browser/open))
 
         ('SystemMonitor (symon-mode (if symon-mode nil t)))
-        ('SudoOpenFile (call-interactively 'my/file/sudo-open-file))
-        ('KillAllOtherBuffers (my/buffer/kill-all-other-buffers))
-        ('ReplaceInFile (call-interactively 'my/file/replace-regexp-in-file))
-        ('ReplaceInFiles (call-interactively 'my/file/replace-regexp-in-files))
+        ('SudoOpenFile (call-interactively 'my/sudo-open-file))
+        ('KillAllOtherBuffers (my/kill-all-other-buffers))
+        ('ReplaceInFile (call-interactively 'my/replace-regexp-in-file))
+        ('ReplaceInFiles (call-interactively 'my/replace-regexp-in-files))
         ('RecompileEmacsFiles 'my/compile/byte-recompile-init-files)
         ('JsonBeautify (call-interactively 'my/json/beautify))
         ('XmlBeautify (call-interactively 'my/xml/beautify))
-        ('ExternalIP (my/utils/get-external-ip))
-        ('ShortenUrl (call-interactively 'my/utils/shorten-url))
-        ('FilterBufferContents (call-interactively 'my/utils/filter-buffer-contents))
-        ('OpenAllOrg (my/utils/open-all-org))
-        ('OpenAlgos (my/utils/open-algos))
-        ('OpenDotEmacs (my/utils/open-dot-emacs))
-        ('OpenDotBashrc (my/utils/open-dot-bashrc))
-        ('OpenSynopsisPython (my/utils/open-synopsis-python))
-        ('OpenSynopsisJS (my/utils/open-synopsis-js))
-        ('OpenSynopsisLua (my/utils/open-synopsis-lua))
-        ('OpenSynopsisElixir (my/utils/open-synopsis-elixir))
+        ('ExternalIP (my/get-external-ip))
+        ('ShortenUrl (call-interactively 'my/shorten-url))
+        ('FilterBufferContents (call-interactively 'my/filter-buffer-contents))
+        ('OpenAllOrg (my/open-all-org))
+        ('OpenAlgos (my/open-algos))
+        ('OpenDotEmacs (my/open-dot-emacs))
+        ('OpenDotBashrc (my/open-dot-bashrc))
+        ('OpenSynopsisPython (my/open-synopsis-python))
+        ('OpenSynopsisJS (my/open-synopsis-js))
+        ('OpenSynopsisLua (my/open-synopsis-lua))
+        ('OpenSynopsisElixir (my/open-synopsis-elixir))
         )
 
       t))
@@ -1367,6 +1369,7 @@
   (add-hook 'elixir-mode-hook 'my/setup/elixir-hook))
 
 (defun main ()
+
   (my/setup/packages)
   (my/setup/font-size)
   (require 's-buffer)
@@ -1375,7 +1378,7 @@
   (my/setup/modes)
 
   (my/setup/theme)
-
+  (my/setup/font)
   (if (display-graphic-p) (my/setup/theme) (my/setup/theme-console))
 
   (unless window-system
@@ -1508,7 +1511,7 @@
             (setenv name (s-concat value delimiter current-value)))))
     (setenv name value)))
 
-(defun my/file/replace-regexp-in-file (filename from to)
+(defun my/replace-regexp-in-file (filename from to)
   (interactive "fChoose file: \nMFrom: \nMTo: ")
   (with-temp-buffer
     (insert-file-contents filename)
@@ -1517,15 +1520,15 @@
     (when (file-writable-p filename)
       (write-region (point-min) (point-max) filename))))
 
-(defun my/file/replace-regexp-in-files (directory extensions from to)
+(defun my/replace-regexp-in-files (directory extensions from to)
   (interactive "DChoose directory: \nMFile extensions: \nMFrom: \nMTo: ")
   (-let ((extensions-quoted (regexp-quote extensions))
          (filenames (directory-files directory t extensions)))
     (-each filenames (lambda (filename)
                        (if (not (file-directory-p filename))
-                           (my/file/replace-regexp-in-file filename from to))))))
+                           (my/replace-regexp-in-file filename from to))))))
 
-(defun my/file/indent-file (filename)
+(defun my/indent-file (filename)
   (interactive "fChoose file: ")
   (with-current-buffer (find-file filename)
     (unless buffer-read-only
@@ -1534,17 +1537,17 @@
         (save-buffer))
     (kill-current-buffer))))
 
-(defun my/file/indent-files (directory extensions)
+(defun my/indent-files (directory extensions)
   (interactive "DChoose directory: \nMFile extensions: ")
   (-let ((extensions-quoted (regexp-quote extensions))
          (filenames (directory-files directory t extensions)))
-    (-each filenames (lambda (filename) (my/file/indent-file filename)))))
+    (-each filenames (lambda (filename) (my/indent-file filename)))))
 
-(defun my/file/sudo-open-file (filename)
+(defun my/sudo-open-file (filename)
   (interactive "fFilename: ")
   (find-file (s-concat "/sudo::" filename)))
 
-(defmacro my/utils/benchmark (&rest body)
+(defmacro my/benchmark (&rest body)
   (require 'timeclock)
 
   (let ((start-time (current-time))
@@ -1556,13 +1559,13 @@
     (- (timeclock-time-to-seconds end-time)
        (timeclock-time-to-seconds start-time))))
 
-;;(message ".emacs evaluation time: %f" (my/utils/benchmark (main)))
+;;(message ".emacs evaluation time: %f" (my/benchmark (main)))
 
-(defun my/buffer/kill-all-other-buffers ()
+(defun my/kill-all-other-buffers ()
   (interactive)
   (-map 'kill-buffer (-remove-item (current-buffer) (buffer-list))))
 
-(defun my/utils/get-external-ip ()
+(defun my/get-external-ip ()
 
   (require 'request)
   (require 'json)
@@ -1586,7 +1589,7 @@
    '((400 . (lambda (&rest _) (message "Got 400.")))
      (404 . (lambda (&rest _) (message "Got 404."))))))
 
-(defun my/utils/shorten-url (param)
+(defun my/shorten-url (param)
   (interactive "MUrl: ")
 
   (require 'request)
@@ -1628,7 +1631,7 @@
      '((400 . (lambda (&rest _) (message "Got 400.")))
        (404 . (lambda (&rest _) (message "Got 404.")))))))
 
-(defun my/utils/filter-buffer-contents (start end pattern)
+(defun my/filter-buffer-contents (start end pattern)
   (interactive "r\nMEnter pattern: ")
   (when pattern
     (save-restriction
@@ -1642,66 +1645,66 @@
         (delete-region (point-min) (point-max))
         (insert result)))))
 
-(defun my/utils/open-file (filename)
+(defun my/open-file (filename)
   (-let [absolute-filename (expand-file-name filename)]
     (if (not (file-exists-p absolute-filename))
         (error "Error! Your `%s' file doesn not exists!" absolute-filename)
       (find-file absolute-filename))))
 
-(defun my/utils/open-all-org ()
-  (my/utils/open-file "~/Dropbox/sync/development/all.org"))
+(defun my/open-all-org ()
+  (my/open-file "~/Dropbox/sync/development/all.org"))
 
-(defun my/utils/open-algos ()
-  (my/utils/open-file "~/Dropbox/sync/development/sources/hackerrank/utils.hpp"))
+(defun my/open-algos ()
+  (my/open-file "~/Dropbox/sync/development/sources/hackerrank/utils.hpp"))
 
-(defun my/utils/open-dot-emacs ()
-  (my/utils/open-file "~/.emacs"))
+(defun my/open-dot-emacs ()
+  (my/open-file "~/.emacs"))
 
-(defun my/utils/open-dot-bashrc ()
-  (my/utils/open-file "~/.bashrc"))
+(defun my/open-dot-bashrc ()
+  (my/open-file "~/.bashrc"))
 
-(defun my/utils/open-synopsis-python ()
-  (my/utils/open-file "~/1/github/PythonSynopsis/synopsis.py"))
+(defun my/open-synopsis-python ()
+  (my/open-file "~/1/github/PythonSynopsis/synopsis.py"))
 
-(defun my/utils/open-synopsis-js ()
-  (my/utils/open-file "~/1/github/JavaScriptSynopsis/1.js"))
+(defun my/open-synopsis-js ()
+  (my/open-file "~/1/github/JavaScriptSynopsis/1.js"))
 
-(defun my/utils/open-synopsis-lua ()
-  (my/utils/open-file "~/1/github/LuaSynopsis/1.lua"))
+(defun my/open-synopsis-lua ()
+  (my/open-file "~/1/github/LuaSynopsis/1.lua"))
 
-(defun my/utils/open-synopsis-elixir ()
-  (my/utils/open-file "~/1/github/ElixirSynopsis/learn/common/0.ex"))
+(defun my/open-synopsis-elixir ()
+  (my/open-file "~/1/github/ElixirSynopsis/learn/common/0.ex"))
 
-(defun my/utils/kill-word ()
+(defun my/kill-word ()
   (interactive)
   (kill-word 1)
   (when kill-ring
     (setq kill-ring (cdr kill-ring))))
 
-(defun my/utils/backward-kill-word ()
+(defun my/backward-kill-word ()
   (interactive)
   (backward-kill-word 1)
   (when kill-ring
     (setq kill-ring (cdr kill-ring))))
 
-(defun my/utils/kill-sentence ()
+(defun my/kill-sentence ()
   (interactive)
   (kill-sentence 1)
   (when kill-ring
     (setq kill-ring (cdr kill-ring))))
 
-(defun my/utils/kill-line ()
+(defun my/kill-line ()
   (interactive)
   (kill-line 1)
   (when kill-ring
     (setq kill-ring (cdr kill-ring))))
 
-(defun my/utils/create-scratch-buffer ()
+(defun my/create-scratch-buffer ()
    (interactive)
    (switch-to-buffer (get-buffer-create "*scratch*"))
    (lisp-interaction-mode))
 
-(defun my/utils/ssh (user host port)
+(defun my/ssh (user host port)
   "Connect to a remote host by SSH."
   (interactive "sUser: \nsHost: \nsPort (default 22): ")
   (let* ((port (if (equal port "") "22" port))
