@@ -5,6 +5,50 @@
   `(when (eq system-type ',type)
      ,@body))
 
+(defun is-x11-mode? ()
+  window-system)
+
+(defun is-terminal-mode? ()
+  (not (is-x11-mode?)))
+
+(defmacro with-terminal-mode (&rest body)
+  (declare (indent defun))
+  `(when (is-terminal-mode?)
+     ,@body))
+
+(defmacro with-x11-mode (&rest body)
+  (declare (indent defun))
+  `(when (is-x11-mode?)
+     ,@body))
+
+(defun my/vc/get-root (directory)
+  (interactive "DChoose directory: ")
+
+  (unless directory
+    (error "Error! Directory is nil!"))
+
+  (-let ((default-directory-saved default-directory)
+         (result nil))
+
+    (cd directory)
+    (while (and (not (my/vc/root? default-directory))
+                (not (s-equals? default-directory "/")))
+      (cd ".."))
+    (unless (s-equals? default-directory "/")
+      (setq result default-directory))
+    (cd default-directory-saved)
+    result))
+
+(defun my/sirena/sirena-svn? (directory)
+  (-let [svn-url (shell-command-to-string (s-concat "svn info " directory " --show-item url"))]
+    (s-contains? "svn+ssh://svn/SVNroot/sirena" svn-url)))
+
+(defun my/sirena/in-project-now? ()
+  (interactive)
+  (when (buffer-file-name)
+    (-when-let (svn-root (my/vc/get-root (file-name-directory (buffer-file-name))))
+      (my/sirena/sirena-svn? svn-root))))
+
 (defmacro with-sirena-project (&rest body)
   (declare (indent defun))
   `(when (my/sirena/in-project-now?)
@@ -17,11 +61,11 @@
 
 (defun my/sirena-encoding ()
   (cond ((eq system-type 'gnu/linux) 'cp866-unix)
-        t 'cp866))
+        (t 'cp866)))
 
 (defun my/common-project-encoding ()
   (cond ((eq system-type 'gnu/linux) 'utf-8-unix)
-        t 'utf-8))
+        (t 'utf-8)))
 
 (defun my/is-sirena-encoding? ()
   (eq buffer-file-coding-system (my/sirena-encoding)))
@@ -62,15 +106,18 @@
     (setq w32-system-coding-system encoding))
 
   (advice-add 'revert-buffer-with-coding-system :around #'my/disable-yornp)
-  (revert-buffer-with-coding-system encoding))
+  (when (buffer-file-name)
+    (revert-buffer-with-coding-system encoding)))
 
 (defun my/setup/encodings ()
   (with-sirena-project
     (unless (my/is-sirena-encoding?)
+      (message "Configuring sirena project encoding...")
       (my/setup-encodings (my/sirena-encoding))))
 
   (with-common-project
     (unless (my/is-common-project-encoding?)
+      (message "Configuring common project encoding...")
       (my/setup-encodings (my/common-project-encoding)))))
 
 (defun my/setup/packages ()
@@ -104,7 +151,7 @@
 
                     ;; python
                     anaconda-mode
-		    company-anaconda
+                    company-anaconda
 
                     ;; highlight word
                     highlight-symbol
@@ -132,7 +179,7 @@
 
                     ;; test
                     helm-gtags
-		    helm-company
+                    helm-company
 
                     ;; grep -> ack -> ag
                     ;; https://github.com/ggreer/the_silver_searcher
@@ -209,11 +256,9 @@
       (message "Error! .env file does not exist!"))))
 
 (defun my/setup/font-size ()
-  (my/env/load)
   (let ((font-size-default "110")
         (font-size-env (or (getenv "EMACS_FONT_SIZE") (getenv "DOT_ENV_EMACS_FONT_SIZE"))))
-    (setq font-size (string-to-number (or font-size-env font-size-default))))
-  )
+    (setq font-size (string-to-number (or font-size-env font-size-default)))))
 
 (defun my/setup/mode-line (&rest args)
   (let ((read-only-color (plist-get args :read-only-color))
@@ -247,41 +292,31 @@
     (set-face-attribute 'filename-face nil
                         :inherit 'face
                         :foreground filename-color
-	                    :weight 'bold
-	                    ;; :height font-size
-                        )
+	                    :weight 'bold)
 
     (set-face-attribute 'position-face nil
 	                    :inherit 'face
 	                    :foreground position-color
                         :family "Menlo"
-	                    :weight 'bold
-	                    ;; :height font-size
-                        )
+	                    :weight 'bold)
 
     (set-face-attribute 'major-mode-face nil
                         :inherit 'face
-                        :foreground major-mode-color
-	                    ;; :height font-size
-                        )
+                        :foreground major-mode-color)
 
     (set-face-attribute 'minor-mode-face nil
                         :inherit 'mode-face
-                        :foreground minor-mode-color
-                        ;; :height font-size
-                        )
+                        :foreground minor-mode-color)
 
     (set-face-attribute 'very-long-line-face nil
                         :inherit 'position-face
 	                    :family "Menlo"
 	                    :weight 'bold
-	                    ;; :height font-size
                         :foreground very-long-line-color
 	                    :background "gray20")
 
     (set-face-attribute 'percent-position-face nil
 	                    :inherit 'position-face
-	                    ;; :height font-size
 	                    :weight 'bold
                         :foreground percent-position-color)
 
@@ -342,7 +377,7 @@
   ;; Xft.hinting:    true
   ;; Xft.hintstyle:  hintfull
   ;; Xft.rgba:   rgb
-  ;; Emacs.font: Iosevka
+  ;; Emacs.font: Iosevka Fixed
 
   (defun my/get-current-font ()
     (face-attribute 'default :font))
@@ -352,7 +387,7 @@
     (message "%s" (my/get-current-font)))
 
   (defun my/get-screen-width ()
-    (if window-system
+    (if (is-x11-mode?)
         (x-display-pixel-width)
       (display-pixel-width)))
 
@@ -388,6 +423,7 @@
   (message "Current font: %s" (my/get-current-font)))
 
 (defun my/setup/theme ()
+  (message "Configuring x11 theme")
   (load-theme 'solarized-dark t)
 
   (my/setup/mode-line
@@ -410,6 +446,8 @@
   (set-face-background 'region "DarkSlateGray"))
 
 (defun my/setup/theme-console ()
+  (message "Configuring terminal theme")
+
   (load-theme 'solarized-dark t)
 
   (my/setup/mode-line
@@ -423,8 +461,6 @@
    :minor-mode-color "dark goldenrod"
    :background-color "black"
    :foreground-color "black")
-
-  (my/setup/font)
 
   ;; Set cursor color
   (set-cursor-color "gray")
@@ -477,6 +513,10 @@
 
   ;; Prevent add tabs when indent of text was used.
   (setq-default indent-tabs-mode nil))
+
+(defun my/map-terminal-key (key)
+  "Map KEY from escape sequence \"\e[emacs-KEY\."
+  (define-key function-key-map (concat "\e[emacs-" key) (kbd key)))
 
 (defun my/setup/keys ()
   (defun my/kill-back-to-indentation ()
@@ -587,11 +627,22 @@
 
   (with-system darwin
     (setq mac-option-key-is-meta nil)
+    (setq mac-option-modifier 'alt)
     (setq mac-command-key-is-meta t)
-    (setq mac-command-modifier 'meta)
-    (setq mac-option-modifier nil))
-  )
+    (setq mac-command-modifier 'meta))
+
+  (with-terminal-mode
+    (dolist (sequence '("C-="
+                        "C--"
+                        "M-w"
+                        "C-y"
+                        "C-/"
+                        "C-M-n"
+                        "C-M-p"))
+      (my/map-terminal-key sequence)))
+
   ;; (global-set-key [(control return)] 'helm-company))
+  )
 
 (defun my/setup/c++ ()
   ;; Commands to checking the irony settings:
@@ -650,13 +701,9 @@
     (unless (my/setup/c++/is-c++-mode?)
       (error "Error! You are not in the c++-mode!"))
 
-    (my/env/load)
-
     (compile command))
 
   (defun my/setup/c++/form-compilation-command (options)
-    (my/env/load)
-
     (-let* ((compiler (getenv "CXX"))
             (standard "-std=c++17")
             (command (format "%s %s %s %s && time ./a.out"
@@ -763,14 +810,15 @@
           (error "Error! No sirena stable located!")))))
 
   (defun my/sirena/hook ()
-    (defun my/sirena/sirena-svn? (directory)
-      (-let [svn-url (shell-command-to-string (s-concat "svn info " directory " --show-item url"))]
-        (s-contains? "svn+ssh://svn/SVNroot/sirena" svn-url)))
-
-    (defun my/sirena/in-project-now? ()
-      (interactive)
-      (-when-let (svn-root (my/vc/get-root (file-name-directory (buffer-file-name))))
-        (my/sirena/sirena-svn? svn-root)))
+    ;; (-let [sirena-env-vars '(("ORACLE_BASE" . "/u01/app/oracle")
+    ;;                          ("ORACLE_HOME" . "/u01/app/oracle/product/12.1.0/db_1")
+    ;;                          ("ORACLE_BIN" . "/u01/app/oracle/product/12.1.0/db_1/bin")
+    ;;                          ("ORACLE_LIB" . "/u01/app/oracle/product/12.1.0/db_1/lib")
+    ;;                          ("ORACLE_SID" . "orcl")
+    ;;                          ("ORACLE_INVENTORY" . "/u01/app/oracle/product/12.1.0/db_1/inventory")
+    ;;                          ("NLS_LANG" . "AMERICAN_CIS.RU8PC866")
+    ;;                          ("SVN_SSH" . "ssh -i /home/idfumg/.ssh/id_rsa -l svn")
+    ;;                          ("SVN_BASE" . "svn+ssh://svn/SVNroot/sirena"))]
 
     (defun my/sirena/make-in (compilation-dir cmd)
       (unless (my/sirena/in-project-now?)
@@ -841,16 +889,6 @@
       (require 'ansi-color)
       (let ((buffer-read-only nil))
         (ansi-color-apply-on-region (point-min) (point-max))))
-
-    ;; (-let [sirena-env-vars '(("ORACLE_BASE" . "/u01/app/oracle")
-    ;;                          ("ORACLE_HOME" . "/u01/app/oracle/product/12.1.0/db_1")
-    ;;                          ("ORACLE_BIN" . "/u01/app/oracle/product/12.1.0/db_1/bin")
-    ;;                          ("ORACLE_LIB" . "/u01/app/oracle/product/12.1.0/db_1/lib")
-    ;;                          ("ORACLE_SID" . "orcl")
-    ;;                          ("ORACLE_INVENTORY" . "/u01/app/oracle/product/12.1.0/db_1/inventory")
-    ;;                          ("NLS_LANG" . "AMERICAN_CIS.RU8PC866")
-    ;;                          ("SVN_SSH" . "ssh -i /home/idfumg/.ssh/id_rsa -l svn")
-    ;;                          ("SVN_BASE" . "svn+ssh://svn/SVNroot/sirena"))]
 
     (add-hook 'find-file-hook 'my/setup/encodings)
 
@@ -971,13 +1009,6 @@
                 savehist-file "~/.emacs.d/savehist"
                 save-place t)
   (savehist-mode t))
-
-(defun my/setup/encoding ()
-  (setq-default default-input-method 'russian-computer)
-  (set-language-environment 'UTF-8)
-  (prefer-coding-system 'utf-8-unix)
-  (set-default-coding-systems 'utf-8-unix)
-  )
 
 (defun my/setup/highlight ()
   (require 'highlight-symbol))
@@ -1369,25 +1400,29 @@
   (add-hook 'elixir-mode-hook 'my/setup/elixir-hook))
 
 (defun main ()
-
   (my/setup/packages)
+
+  (my/env/load)
   (my/setup/font-size)
+
   (require 's-buffer)
   (require 'dash)
+
   (my/setup/misc)
   (my/setup/modes)
-
-  (my/setup/theme)
   (my/setup/font)
-  (if (display-graphic-p) (my/setup/theme) (my/setup/theme-console))
 
-  (unless window-system
-    (require 'mouse)
-    (xterm-mouse-mode t)
-    (defun track-mouse (e))
-    (setq mouse-sel-mode t))
+  (with-x11-mode
+   (my/setup/theme))
 
-  (my/setup/encoding)
+  (with-terminal-mode
+   (my/setup/theme-console)
+   (require 'mouse)
+   (xterm-mouse-mode t)
+   (defun track-mouse (e))
+   (setq mouse-sel-mode t))
+
+  (my/setup/encodings)
   (my/setup/c++)
   (my/setup/python)
   (my/setup/browser)
@@ -1483,24 +1518,6 @@
           (path (s-concat expanded-path expanded-path-tail))
           (vcs (-filter (lambda (vc) (file-directory-p (s-concat path vc))) known-vcs)))
     (-any? 'stringp vcs)))
-
-(defun my/vc/get-root (directory)
-  (interactive "DChoose directory: ")
-
-  (unless directory
-    (error "Error! Directory is nil!"))
-
-  (-let ((default-directory-saved default-directory)
-         (result nil))
-
-    (cd directory)
-    (while (and (not (my/vc/root? default-directory))
-                (not (s-equals? default-directory "/")))
-      (cd ".."))
-    (unless (s-equals? default-directory "/")
-      (setq result default-directory))
-    (cd default-directory-saved)
-    result))
 
 (defun my/shell/add-to-env (name value &optional back?)
   (-if-let (current-value (getenv name))
@@ -1713,6 +1730,13 @@
     (term-mode)
     (term-char-mode)
     (switch-to-buffer "*ssh*")))
+
+(defun my/key-sequence-binding (sequence)
+  (interactive "sSequence binding:")
+  (edmacro-format-keys (kbd sequence) t))
+
+(defun my/key-sequence-to-bytes ()
+  (read-key-sequence-vector "Type key sequence:"))
 
 (provide '.emacs)
 (custom-set-variables

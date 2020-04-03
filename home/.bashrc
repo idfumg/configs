@@ -132,6 +132,7 @@ export LOCAL_CC=${CC}
 # export DOT_ENV_CXX_COMPILER=${CXX}
 # export DOT_ENV_ENABLE_GLIBCXX_DEBUG=0
 # export DOT_ENV_EDITOR=emacs
+# export DOT_ENV_EDITOR="/Applications/Emacs.app/Contents/MacOS/Emacs"
 # export DOT_ENV_VISUAL=emacs
 # export DOT_ENV_LC_ALL=POSIX
 # export DOT_ENV_TERM=screen-256color
