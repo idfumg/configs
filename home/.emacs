@@ -379,48 +379,54 @@
   ;; Xft.rgba:   rgb
   ;; Emacs.font: Iosevka Fixed
 
-  (defun my/get-current-font ()
+  (defun my/current-font ()
     (face-attribute 'default :font))
 
   (defun my/print-current-font ()
     (interactive)
-    (message "%s" (my/get-current-font)))
+    (message "%s" (my/current-font)))
 
-  (defun my/get-screen-width ()
+  (defun my/screen-width ()
     (if (is-x11-mode?)
         (x-display-pixel-width)
       (display-pixel-width)))
 
-  (defun my/is-big-screen? ()
-    (> (my/get-screen-width) 2000))
+  (defun my/screen-height ()
+    (if (is-x11-mode?)
+        (x-display-pixel-height)
+      (display-pixel-height)))
 
-  (defun my/is-font-exists? (font)
+  (defun my/font-exists? (font)
     (find-font (font-spec :name font)))
+
+  (defun my/font-size (font)
+    (cond ((eq font 'iosevka)
+           (cond ((and (>= (my/screen-height) 1080) (>= (my/screen-width) 1920)) " 14")
+                 (t " 16")))
+          (t " 16")))
 
   (defun my/find-font ()
     (let* ((iosevka "Iosevka Fixed")
            (ubuntu "Ubuntu Mono")
            (consolas "Consolas")
-           (liberation "Liberation Mono")
-           (is-big-screen? (my/is-big-screen?)))
+           (liberation "Liberation Mono"))
       (cond
-       ((my/is-font-exists? iosevka)
-        (if is-big-screen? (s-concat iosevka " 19") (s-concat iosevka " 16")))
-       ((my/is-font-exists? ubuntu)
-        (if is-big-screen? (s-concat ubuntu " 19") (s-concat ubuntu " 16")))
-       ((my/is-font-exists? consolas)
-        (if is-big-screen? (s-concat consolas " 19") (s-concat consolas " 16")))
-       ((my/is-font-exists? liberation)
-        (if is-big-screen? (s-concat liberation " 19") (s-concat liberation " 16")))
+       ((my/font-exists? iosevka) (s-concat iosevka (my/font-size 'iosevka)))
+       ((my/font-exists? ubuntu) (s-concat ubuntu (my/font-size 'ubuntu)))
+       ((my/font-exists? consolas) (s-concat consolas (my/font-size 'consolas)))
+       ((my/font-exists? liberation) (s-concat liberation (my/font-size 'liberation)))
        (t ""))))
 
   (defun my/set-font (font frame)
-    (set-frame-parameter frame 'font (my/find-font)))
+    (set-frame-parameter frame 'font font))
 
-  (set-default-font (my/find-font))
-  (my/set-font (my/find-font) nil)
-  (push (lambda (frame) (my/set-font (my/find-font) frame)) after-make-frame-functions)
-  (message "Current font: %s" (my/get-current-font)))
+  (let* ((font (my/find-font)))
+    (set-default-font font)
+    (my/set-font font nil)
+    (push (lambda (frame) (my/set-font font frame)) after-make-frame-functions))
+
+  (message "Screen width: %s, height: %s" (my/screen-width) (my/screen-height))
+  (message "Current font: %s" (my/current-font)))
 
 (defun my/setup/theme ()
   (message "Configuring x11 theme")
