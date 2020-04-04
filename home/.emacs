@@ -208,6 +208,8 @@
                     ;; System resources monitor in the mode line when idle
                     symon
 
+                    doom-modeline
+
                     ;; Lua packages
                     lua-mode
                     company-lua
@@ -401,7 +403,7 @@
 
   (defun my/font-size (font)
     (cond ((eq font 'iosevka)
-           (cond ((and (>= (my/screen-height) 1080) (>= (my/screen-width) 1920)) " 14")
+           (cond ((and (>= (my/screen-height) 1080) (>= (my/screen-width) 1920)) " 12")
                  (t " 16")))
           (t " 16")))
 
@@ -1405,6 +1407,35 @@
 
   (add-hook 'elixir-mode-hook 'my/setup/elixir-hook))
 
+(defun my/setup/doom-modeline ()
+  (doom-modeline-mode 1)
+  (setq doom-modeline-height 1)
+  (setq doom-modeline-buffer-file-name-style 'file-name)
+  (setq doom-modeline-icon nil)
+  (setq doom-modeline-major-mode-icon t)
+  (setq doom-modeline-buffer-modification-icon t)
+  (setq doom-modeline-enable-word-count t)
+  (setq doom-modeline-continuous-word-count-modes '(markdown-mode gfm-mode org-mode))
+  (setq doom-modeline-buffer-encoding t)
+  (setq doom-modeline-indent-info t)
+  (setq doom-modeline-checker-simple-format t)
+  (setq doom-modeline-number-limit 99)
+  (setq doom-modeline-vcs-max-length 12)
+  (setq doom-modeline-modal-icon t)
+  (setq doom-modeline-env-version t)
+  (setq doom-modeline-env-enable-python t)
+  (setq doom-modeline-env-enable-ruby t)
+  (setq doom-modeline-env-enable-perl t)
+  (setq doom-modeline-env-enable-go t)
+  (setq doom-modeline-env-enable-elixir t)
+  (setq doom-modeline-env-enable-rust t)
+  (setq doom-modeline-env-python-executable "python") ; or `python-shell-interpreter'
+  (setq doom-modeline-env-ruby-executable "ruby")
+  (setq doom-modeline-env-perl-executable "perl")
+  (setq doom-modeline-env-go-executable "go")
+  (setq doom-modeline-env-elixir-executable "iex")
+  (setq doom-modeline-env-rust-executable "rustc"))
+
 (defun main ()
   (my/setup/packages)
 
@@ -1427,6 +1458,8 @@
    (xterm-mouse-mode t)
    (defun track-mouse (e))
    (setq mouse-sel-mode t))
+
+  (my/setup/doom-modeline)
 
   (my/setup/encodings)
   (my/setup/c++)
@@ -1755,7 +1788,8 @@
     ("0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
  '(package-selected-packages
    (quote
-    (dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag))))
+    ((doom-modeline-mode 1)
+     doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
