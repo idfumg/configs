@@ -405,7 +405,7 @@
     (cond ((eq font 'iosevka)
            (cond ((and (>= (my/screen-height) 1080) (>= (my/screen-width) 1920)) " 12")
                  ((and (>= (my/screen-height) 1050) (>= (my/screen-width) 1680)) " 19")
-                 ((and (>= (my/screen-height) 1028) (>= (my/screen-width) 1680)) " 7")
+                 ((and (>= (my/screen-height) 1028) (>= (my/screen-width) 1680)) " 6")
                  (t " 16")))
           (t " 16")))
 
