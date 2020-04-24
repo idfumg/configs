@@ -988,6 +988,7 @@
   (add-hook 'after-init-hook 'my/c-mode-file-extensions-hook))
 
 (defun my/setup/python ()
+  (setq python-shell-interpreter "python3")
   ;; (add-hook 'python-mode-hook
   ;;           (lambda()
   ;;             (run-python "/usr/bin/python")))
@@ -1431,7 +1432,7 @@
   (setq doom-modeline-env-enable-go t)
   (setq doom-modeline-env-enable-elixir t)
   (setq doom-modeline-env-enable-rust t)
-  (setq doom-modeline-env-python-executable "python") ; or `python-shell-interpreter'
+  (setq doom-modeline-env-python-executable "python3") ; or `python-shell-interpreter'
   (setq doom-modeline-env-ruby-executable "ruby")
   (setq doom-modeline-env-perl-executable "perl")
   (setq doom-modeline-env-go-executable "go")

@@ -1060,3 +1060,6 @@ utils_restore_config() {
 
     cd -
 }
+
+
+export LIBGL_ALWAYS_INDIRECT=1
