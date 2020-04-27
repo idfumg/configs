@@ -106,7 +106,7 @@
     (setq w32-system-coding-system encoding))
 
   (advice-add 'revert-buffer-with-coding-system :around #'my/disable-yornp)
-  (when (buffer-file-name)
+  (when (and buffer-file-name (eq buffer-file-coding-system (my/sirena-encoding)))
     (revert-buffer-with-coding-system encoding)))
 
 (defun my/setup/encodings ()
