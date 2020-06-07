@@ -711,12 +711,14 @@
     (unless (my/setup/c++/is-c++-mode?)
       (error "Error! You are not in the c++-mode!"))
 
-    (compile command))
+    (compile command)
+    (switch-to-buffer-other-window "*compilation*"))
 
   (defun my/setup/c++/form-compilation-command (options)
     (-let* ((compiler (getenv "CXX"))
             (standard "-std=c++17")
-            (command (format "%s %s %s %s && time ./a.out"
+            ;;(command (format "%s %s %s %s && time ./a.out"
+            (command (format "%s %s %s %s"
                              compiler
                              (mapconcat 'identity options " ")
                              standard
@@ -772,10 +774,27 @@
     (-let [options '("-O3")]
       (my/setup/c++/compile (my/setup/c++/form-compilation-command options))))
 
+  (defun my/bury-compile-buffer-if-successful (buffer string)
+    (when (and
+           (buffer-live-p buffer)
+           (string-match "compilation" (buffer-name buffer))
+           (string-match "finished" string)
+           (not
+            (with-current-buffer buffer
+              (goto-char (point-min))
+              (search-forward "warning" nil t))))
+      (run-with-timer 0.5 nil
+                      (lambda (buf)
+                        (bury-buffer buf)
+                        (switch-to-prev-buffer (get-buffer-window buf) 'kill)
+                        (other-window 1))
+                      buffer)))
+
   (defun my/setup/c++/compilation-finished-hook (buffer msg)
     (if (s-contains? "finished" msg)
         (my/tooltip/show "\n Compilation successful :-) \n" "green")
-      (my/tooltip/show "\n Compilation failed :-( \n" "red")))
+      (my/tooltip/show "\n Compilation failed :-( \n" "red"))
+    (my/bury-compile-buffer-if-successful buffer msg))
 
   (defun my/setup/sirena ()
     (defun my/sirena/redmine/cut-tasks-names (start end)
@@ -1714,7 +1733,7 @@
   (my/open-file "~/Dropbox/sync/development/all.org"))
 
 (defun my/open-algos ()
-  (my/open-file "~/Dropbox/sync/development/sources/hackerrank/utils.hpp"))
+  (my/open-file "~/Dropbox/sync/development/cp/1/temp.cpp"))
 
 (defun my/open-dot-emacs ()
   (my/open-file "~/.emacs"))
