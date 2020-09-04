@@ -1733,7 +1733,7 @@
   (my/open-file "~/Dropbox/sync/development/all.org"))
 
 (defun my/open-algos ()
-  (my/open-file "~/Dropbox/sync/development/cp/template.cpp"))
+  (my/open-file "~/1/github/algorithms_collection/template.hpp"))
 
 (defun my/open-dot-emacs ()
   (my/open-file "~/.emacs"))
