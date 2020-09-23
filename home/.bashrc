@@ -328,6 +328,8 @@ sirena_start_oracle() {
     sirena_oracle_command "startup;"
     sirena_oracle_command "ALTER USER system IDENTIFIED BY manager ACCOUNT UNLOCK;"
     sirena_oracle_command "ALTER SYSTEM SET open_cursors = 2500 SCOPE=BOTH;"
+    sirena_oracle_command "GRANT CREATE SESSION TO stable;"
+    sirena_oracle_command "GRANT CREATE SESSION TO trunk;"
 }
 
 sirena_stop_oracle() {
