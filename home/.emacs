@@ -425,7 +425,7 @@
     (set-frame-parameter frame 'font font))
 
   (let* ((font (my/find-font)))
-    (set-default-font font)
+;;    (set-default-font font)
     (my/set-font font nil)
     (push (lambda (frame) (my/set-font font frame)) after-make-frame-functions))
 
