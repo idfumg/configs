@@ -715,7 +715,8 @@
     (switch-to-buffer-other-window "*compilation*"))
 
   (defun my/setup/c++/form-compilation-command (options)
-    (-let* ((compiler (getenv "CXX"))
+    (-let* ((compiler "clang++")
+            ;;(compiler (getenv "CXX"))
             (standard "-std=c++17")
             ;;(command (format "%s %s %s %s && time ./a.out"
             (command (format "%s %s %s %s"
