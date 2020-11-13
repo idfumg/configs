@@ -43,11 +43,15 @@
   (-let [svn-url (shell-command-to-string (s-concat "svn info " directory " --show-item url"))]
     (s-contains? "svn+ssh://svn/SVNroot/sirena" svn-url)))
 
+(defun my/sirena/sirena-git? (directory)
+  (file-exists-p (s-concat directory "./.git")))
+
 (defun my/sirena/in-project-now? ()
   (interactive)
   (when (buffer-file-name)
     (-when-let (svn-root (my/vc/get-root (file-name-directory (buffer-file-name))))
-      (my/sirena/sirena-svn? svn-root))))
+      (or (my/sirena/sirena-svn? svn-root)
+          (my/sirena/sirena-git? svn-root)))))
 
 (defmacro with-sirena-project (&rest body)
   (declare (indent defun))
