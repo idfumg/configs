@@ -44,7 +44,8 @@
     (s-contains? "svn+ssh://svn/SVNroot/sirena" svn-url)))
 
 (defun my/sirena/sirena-git? (directory)
-  (file-exists-p (s-concat directory "./.git")))
+  (-let [svn-url (shell-command-to-string "git remote get-url origin")]
+    (s-contains? "sirena" svn-url)))
 
 (defun my/sirena/in-project-now? ()
   (interactive)
@@ -1824,3 +1825,14 @@
  ;; If there is more than one, they won't work right.
  )
 (put 'downcase-region 'disabled nil)
+
+~/.emacs.d/eshell
+;; alias .. cd .. $*
+;; alias alert notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e 's/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//')" $*
+;; alias egrep egrep --color=auto $*
+;; alias fgrep fgrep --color=auto $*
+;; alias grep grep --color=auto $*
+;; alias l ls -CF $*
+;; alias la ls -A $*
+;; alias ll ls -alF $*
+;; alias ls ls --color=auto $*
