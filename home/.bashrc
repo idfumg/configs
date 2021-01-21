@@ -124,8 +124,8 @@ export PLATFORM=m64
 
 export CXX=g++
 export CC=gcc
-export LOCAL_CXX=${CXX}
-export LOCAL_CC=${CC}
+export LOCALCXX=${CXX}
+export LOCALCC=${CC}
 
 # export DOT_ENV_EMACS_FONT_SIZE=160
 # export DOT_ENV_C_COMPILER=${CC}
@@ -169,7 +169,7 @@ export SIRENA_PATH=${DOT_ENV_SIRENA_PATH:-}
 export SIRENA_PATH_TRUNK=${DOT_ENV_SIRENA_PATH_TRUNK:-}
 export SIRENA_PATH_STABLE=${DOT_ENV_SIRENA_PATH_STABLE:-}
 export SIRENA_PATH_DOCKER=${DOT_ENV_SIRENA_PATH_DOCKER:-}
-export SIRENA_CPU_COUNT=${DOT_ENV_SIRENA_CPU_COUNT:-10}
+export SIRENA_CPU_COUNT=${DOT_ENV_SIRENA_CPU_COUNT:-6}
 export ORACLE_BASE=${DOT_ENV_SIRENA_ORACLE_BASE:-}
 export ORACLE_HOME=${DOT_ENV_SIRENA_ORACLE_HOME:-}
 export ORACLE_SID=${DOT_ENV_SIRENA_ORACLE_SID:-}
@@ -184,8 +184,8 @@ export LD_LIBRARY_PATH=${ORACLE_LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}
 
 export CC=${C_COMPILER}
 export CXX=${CXX_COMPILER}
-export LOCAL_CC=${C_COMPILER}
-export LOCAL_CXX=${CXX_COMPILER}
+export LOCALCC=${C_COMPILER}
+export LOCALCXX=${CXX_COMPILER}
 export PATH=~/bin:${PATH}
 #export PROMPT_COMMAND='echo -ne "\033]0;${PWD}\007"'
 
@@ -206,8 +206,8 @@ gcc_version() {
     echo 'ENABLE_GLIBCXX_DEBUG='${ENABLE_GLIBCXX_DEBUG}
     echo 'CC='${CC}
     echo 'CXX='${CXX}
-    echo 'LOCAL_CC='${LOCAL_CC}
-    echo 'LOCAL_CXX='${LOCAL_CXX}
+    echo 'LOCALCC='${LOCALCC}
+    echo 'LOCALCXX='${LOCALCXX}
     echo '\n*************************************************************\n'
 }
 
@@ -330,6 +330,7 @@ sirena_start_oracle() {
     sirena_oracle_command "ALTER SYSTEM SET open_cursors = 2500 SCOPE=BOTH;"
     sirena_oracle_command "GRANT CREATE SESSION TO stable;"
     sirena_oracle_command "GRANT CREATE SESSION TO trunk;"
+    sirena_oracle_command "GRANT CREATE SESSION TO astra;"
 }
 
 sirena_stop_oracle() {
@@ -389,6 +390,8 @@ sirena_init_postgres() {
     sirena_init_postgres_build_db
     sirena_start_postgresql
     sirena_postgresql_command "create user system encrypted password 'manager' superuser;"
+    sirena_postgresql_command "create user etick_test encrypted password 'etick' superuser;"
+    sirena_postgresql_command "create user astra encrypted password 'astra' superuser;"
     sirena_stop_postgresql
 }
 
@@ -428,18 +431,74 @@ sirena_init_docker() {
 }
 
 sirena_build() {
-    local SIRENA_BUILD_VARS="BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=${ENABLE_GLIBCXX_DEBUG} LANG=en_US.UTF-8 LANGUAGE=en_US"
+    local GCC_VERSIONS="
+export LOCALCC=gcc-8
+export LOCALCXX=g++-8
+export CC=gcc-8
+export CXX=g++-8"
+
+    local SIRENA_BUILD_VARS="LOCALCC=gcc-8 LOCALCXX=g++-8 CC=gcc-8 CXX=g++-8 BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=${ENABLE_GLIBCXX_DEBUG} LANG=en_US.UTF-8 LANGUAGE=en_US PLATFORM=m64"
 
     local gcc_version="
     echo CC=\${CC}
     echo CXX=\${CXX}
-    echo LOCAL_CC=\${LOCAL_CC}
-    echo LOCAL_CXX=\${LOCAL_CXX}
+    echo LOCALCC=\${LOCALCC}
+    echo LOCALCXX=\${LOCALCXX}
     echo ''
     echo ''
-    echo \$(\${CC} -xc++ -E -v -)"
+    echo 'Compiler configuration and include paths'
+    echo \$(\${CC} -xc++ -E -v -)
+    echo ''
+    echo ''
+    echo ''"
 
-    local build_command="$gcc_version && cd ${SIRENA_PATH_DOCKER} && echo Path: \${PWD} && $SIRENA_BUILD_VARS ./buildFromScratch.sh"
+    local build_command="$GCC_VERSIONS && $gcc_version && cd ${SIRENA_PATH_DOCKER} && echo Path: \${PWD} && $SIRENA_BUILD_VARS ./buildFromScratch.sh"
+
+    local database_login=$1
+    local database_password=$2
+
+    if [ -z $database_login ] || [ -z $database_password ]; then
+        sirena_exec "$build_command"
+        return 0
+    fi
+
+    if [ $# -ge 2 ]; then
+        local ARGS=${@:3}
+        if [ -n $database_login ] && [ -n $database_password ]; then
+            sirena_exec "$build_command $database_login/$database_password $ARGS"
+            return 0
+        fi
+    fi
+
+    echo "Error! Wrong function parameters!"
+    return 1
+}
+
+astra_build() {
+    local GCC_VERSIONS="
+export LOCALCC=gcc-7
+export LOCALCXX=g++-7
+export CC=gcc-7
+export CXX=g++-7"
+
+    local ASTRA_BUILD_VARS="XP_NO_RECHECK=1 XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim PG_HOST=${PG_HOST:-localhost} CPP_STD_VERSION=c++17 PLATFORM=m64 BUILD_TESTS=1 ENABLE_SHARED=1 LANG=en_US.UTF-8 LANGUAGE=en_US SYSPAROL=system/manager"
+
+    local gcc_version="
+    echo CC=\${CC}
+    echo CXX=\${CXX}
+    echo LOCALCC=\${LOCALCC}
+    echo LOCALCXX=\${LOCALCXX}
+    echo ''
+    echo ''
+    echo 'Compiler configuration and include paths'
+    echo \$(\${CC} -xc++ -E -v -)
+    echo ''
+    echo ''
+    echo ''"
+
+    local build_command="$GCC_VERSIONS && $gcc_version && cd ${SIRENA_PATH_DOCKER} && echo Path: \${PWD} && $ASTRA_BUILD_VARS ./buildFromScratch.sh"
+
+    local build_modules="--build_external_libs --configlibs --buildlibs --configastra --buildastra --createtcl"
 
     local database_login=$1
     local database_password=$2
@@ -465,8 +524,16 @@ sirena_build_trunk() {
     sirena_build trunk trunk
 }
 
+astra_build_trunk() {
+    astra_build astra_trunk astra_trunk
+}
+
 sirena_build_stable() {
     sirena_build stable stable
+}
+
+astra_build_stable() {
+    astra_build astra_stable astra_stable
 }
 
 sirena_build_trunk_db() {
@@ -482,6 +549,10 @@ sirena_make_sql_change() {
 }
 
 sirena_make() {
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make -sj ${SIRENA_CPU_COUNT} $@"
+}
+
+astra_make() {
     sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make -sj ${SIRENA_CPU_COUNT} $@"
 }
 
@@ -514,6 +585,10 @@ sirena_make_emd() {
 }
 
 sirena_clean() {
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make -C $@ clean"
+}
+
+astra_clean() {
     sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make -C $@ clean"
 }
 
@@ -607,6 +682,10 @@ sirena_test() {
     fi
 
     sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && XP_LIST=$1.$2 make xp-tests"
+}
+
+astra_test() {
+    sirena_test $@
 }
 
 sirena_test_rail() {
