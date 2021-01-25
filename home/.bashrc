@@ -481,7 +481,7 @@ export LOCALCXX=g++-7
 export CC=gcc-7
 export CXX=g++-7"
 
-    local ASTRA_BUILD_VARS="XP_NO_RECHECK=1 XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim PG_HOST=${PG_HOST:-localhost} CPP_STD_VERSION=c++17 PLATFORM=m64 BUILD_TESTS=1 ENABLE_SHARED=1 LANG=en_US.UTF-8 LANGUAGE=en_US SYSPAROL=system/manager"
+    local ASTRA_BUILD_VARS="XP_NO_RECHECK=1 XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim PG_HOST=${PG_HOST:-localhost} CPP_STD_VERSION=c++17 PLATFORM=m64 BUILD_TESTS=1 ENABLE_SHARED=1 LANG=en_US.UTF-8 LANGUAGE=en_US SYSPAROL=system/manager MY_LOCAL_CFLAGS=-Wno-error=maybe-uninitialized"
 
     local gcc_version="
     echo CC=\${CC}
@@ -636,6 +636,18 @@ sirena_sql_apply_alter() {
     sirena_exec_user oracle "echo '@/sirena_src/$SQL_FILENAME' > /root/start.sql && sqlplus $DB_LOGIN_PASSWORD @/root/start.sql"
 }
 
+astra_sql_apply_alter() {
+    if [ ! $# -eq 2 ]; then
+       echo "Usage: ${FUNCNAME[0]} sql_filename login/password"
+       return 1
+    fi
+
+    local SQL_FILENAME=$1
+    local DB_LOGIN_PASSWORD=$2
+
+    sirena_exec_user oracle "echo '@/sirena_src/$SQL_FILENAME' > /root/start.sql && sqlplus $DB_LOGIN_PASSWORD @/root/start.sql"
+}
+
 sirena_sql_apply_fdat() {
     if [ ! $# -eq 2 ]; then
        echo "Usage: ${FUNCNAME[0]} fdat_filename login/password"
@@ -685,7 +697,7 @@ sirena_test() {
 }
 
 astra_test() {
-    sirena_test $@
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make xp-tests-local"
 }
 
 sirena_test_rail() {
