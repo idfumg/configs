@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+arch_prepare() {
+    # pacman -Syy
+    # pacman -S git
+    # git clone https://github.com/idfumg/configs
+    0
+}
+
 arch_start() {
     # fdisk -l
     # fdisk /dev/sdx # substitude your disk number
@@ -15,8 +22,8 @@ arch_start() {
 }
 
 arch_install_fs_and_lvm() {
-    if [ ! $# -eq 2 ]; then
-        echo "Usage: ${FUNCNAME[0]} partition_name"
+    if [ ! $# -eq 3 ]; then
+        echo "Usage: ${FUNCNAME[0]} uefi_disk lvm_disk volume_group_name"
     fi
 
     local ARCH_DISK_UEFI=$1
@@ -46,6 +53,10 @@ arch_install_fs_and_lvm() {
 }
 
 arch_mount_partitions_to_chroot_fs() {
+    if [ ! $# -eq 2 ]; then
+        echo "Usage: ${FUNCNAME[0]} uefi_disk volume_group_name"
+    fi
+
     local ARCH_DISK_UEFI=$1
     local ARCH_VGNAME=$2
 
@@ -64,7 +75,7 @@ arch_install_bases_and_go_to_the_chroot_jail() {
     arch-chroot /mnt
 }
 
-arch_install_packages() {
+arch_install_packages_system() {
     # enable multilib repository
     sed -i "s/#\[multilib\]/\[multilib\]\nInclude\ =\ \/etc\/pacman\.d\/mirrorlist/g" /etc/pacman.conf
 
@@ -147,7 +158,7 @@ arch_install_locales() {
 
     # /etc/locale.conf
     echo "LANG=en_US.UTF-8" | tee /etc/locale.conf
-    echo "LANGUAGE=ru_RU.UTF-8" | tee -a /etc/locale.conf # set a fallback locale
+    #echo "LANGUAGE=ru_RU.UTF-8" | tee -a /etc/locale.conf # set a fallback locale
     echo "LC_ALL=en_US.UTF-8" | tee -a /etc/locale.conf
 
     # /etc/environment
@@ -167,6 +178,7 @@ arch_install_users() {
     echo root:root | chpasswd
     useradd -m -g users -G wheel idfumg # wheel group for the sudo mechanism
     echo idfumg:idfumg | chpasswd
+    EDITOR=nano visudo # enable/uncomment sudo for the wheel group
 }
 
 arch_install_mkinitcpio() {
@@ -192,12 +204,6 @@ arch_install_grub() {
     cp /usr/share/locale/en\@quot/LC_MESSAGES/grub.mo /boot/grub/locale/en.mo
     # make a grub config file
     grub-mkconfig -o /boot/grub/grub.cfg
-}
-
-arch_install_steam() {
-    pacman -S --noconfirm lib32-nvidia-utils ttf-liberation steam
-    # start steam
-    # Settings->Steam Play->Enable Steam Play for all other titles
 }
 
 arch_install_wireless_firmware() {
@@ -237,29 +243,29 @@ arch_finish() {
 }
 
 arch_setup_users() {
-    passwd
-    passwd idfumg
-    EDITOR=nano visudo # enable/uncomment sudo for the wheel group
+    sudo passwd root
+    sudo passwd idfumg
 }
 
-arch_install_packages2() {
+arch_install_packages_user() {
     # X
-    pacman -S --noconfirm xorg-server xfce4 xfce4-goodies xf86-video-nouveau
+    sudo pacman -S --noconfirm xorg-server xfce4 xfce4-goodies xf86-video-nouveau
 
     # audio
-    pacman -S --noconfirm pulseaudio
+    sudo pacman -S --noconfirm pulseaudio
 
     # utilities
-    pacman -S --noconfirm emacs pavucontrol firefox gnome-keyring lshw neofetch git grub-customizer bash-completion wget
+    sudo pacman -S --noconfirm emacs pavucontrol firefox gnome-keyring lshw neofetch git grub-customizer bash-completion wget
 
     # lightdm login manager
     # pacman -S lightdm lightdm-gtk-greeter
     # systemctl enable lightdm
 
     # yay
+    sudo pacman -S --noconfirm go
     git clone https://aur.archlinux.org/yay.git /tmp/yay
     cd /tmp/yay
-    makepkg -is --noconfirm
+    makepkg -is
 
     # ly
     yay -S --noconfirm ly
@@ -271,12 +277,18 @@ arch_install_packages2() {
     systemctl enable ly
 
     # betterlockscreen
-    yay -S --noconfirm betterlockscreen
-    betterlockscreen -u ~/Downloads/image.jpg
+    yay -S betterlockscreen
+    betterlockscreen -u /configs/arch_image.jpg
     xfconf-query -c xfce4-session -p /general/LockCommand -s "betterlockscreen -l" --create -t string
 }
 
-main() {
+arch_install_steam() {
+    sudo pacman -S --noconfirm lib32-nvidia-utils ttf-liberation steam
+    # start steam
+    # Settings->Steam Play->Enable Steam Play for all other titles
+}
+
+arch_main_live() {
     local ARCH_DISK_UEFI=sda1
     local ARCH_DISK_LVM=sda2
     local ARCH_VGNAME=vg0
@@ -285,7 +297,10 @@ main() {
     arch_install_fs_and_lvm $ARCH_DISK_UEFI $ARCH_DISK_LVM $ARCH_VGNAME
     arch_mount_partitions_to_chroot_fs $ARCH_DISK_UEFI $ARCH_VGNAME
     arch_install_bases_and_go_to_the_chroot_jail
-    arch_install_packages
+}
+
+arch_main_chroot() {
+    arch_install_packages_system
     arch_install_swap
     arch_install_timezone
     arch_install_hostname box
@@ -294,11 +309,20 @@ main() {
     arch_install_users
     arch_install_mkinitcpio
     arch_install_grub
-    arch_install_steam
     arch_install_wireless_firmware
     arch_finish
-    # arch_setup_users
-    # arch_install_packages2
+}
+
+arch_main_after_reboot() {
+    arch_setup_users
+    arch_install_packages_user
+    arch_install_steam
+}
+
+main() {
+    arch_main_live
+    # arch_main_chroot
+    # arch_main_after_reboot
 }
 
 main
