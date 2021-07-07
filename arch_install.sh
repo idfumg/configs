@@ -11,6 +11,7 @@ arch_start() {
     # n # to create a new partition for the remaining space
     # t # to choose the partition type (30 - for Linux LVM)
     # w # write the changes and exit
+    0
 }
 
 arch_install_fs_and_lvm() {
@@ -20,17 +21,18 @@ arch_install_fs_and_lvm() {
 
     local ARCH_DISK_UEFI=$1
     local ARCH_DISK_LVM=$2
+    local ARCH_VGNAME=$3
 
     # make a filesystem for the first UEFI partition
     mkfs.fat -F32 /dev/$ARCH_DISK_UEFI
     # create a partition for LVM
     pvcreate --dataalignment 1m /dev/$ARCH_DISK_LVM
     # assign a ARCH_DISK_LVM partition to be a part of vgroup
-    vgcreate volgroup0 /dev/$ARCH_DISK_LVM
+    vgcreate $ARCH_VGNAME /dev/$ARCH_DISK_LVM
     # create logical volume for the root
-    lvcreate -L 30Gb vgroup0 -n lv_root
+    lvcreate -L 30Gb $ARCH_VGNAME -n lv_root
     # create the second logical volume for home
-    lvcreate -l 100%FREE vgroup0 -n lv_home
+    lvcreate -l 100%FREE $ARCH_VGNAME -n lv_home
     # load kernel module into a kernel for working with LVM
     modprobe dm_mod
     # must find the created volume group
@@ -38,22 +40,20 @@ arch_install_fs_and_lvm() {
     # activate our two created logical volumes
     vgchange -ay
     # create the ext4 filesystem for the root partition
-    mkfs.ext4 /dev/vgroup0/lv_root
+    mkfs.ext4 /dev/$ARCH_VGNAME/lv_root
     # create the ext4 filesystem for the home partition
-    mkfs.ext4 /dev/vgroup0/lv_home
-}
-
-arch_install_chroot_directories_hierarchy() {
-    mkdir -p /mnt/home
-    mkdir -p /mnt/etc
-    mkdir -p /mnt/boot
+    mkfs.ext4 /dev/$ARCH_VGNAME/lv_home
 }
 
 arch_mount_partitions_to_chroot_fs() {
     local ARCH_DISK_UEFI=$1
+    local ARCH_VGNAME=$2
 
-    mount /dev/vgroup0/lv_root /mnt
-    mount /dev/vgroup0/lv_home /mnt/home
+    mount /dev/$ARCH_VGNAME/lv_root /mnt
+    mkdir -pv /mnt/home
+    mkdir -pv /mnt/etc
+    mkdir -pv /mnt/boot/EFI
+    mount /dev/$ARCH_VGNAME/lv_home /mnt/home
     mount /dev/$ARCH_DISK_UEFI /mnt/boot/EFI
     # create the fstab file for the mounted in the /mnt partitions
     genfstab -U -p /mnt >> /mnt/etc/fstab
@@ -93,38 +93,6 @@ arch_install_packages() {
     # cpu
     pacman -S --noconfirm intel-ucode
 
-    # X
-    pacman -S --noconfirm xorg-server xfce4 xfce4-goodies xf86-video-nouveau
-
-    # audio
-    pacman -S --noconfirm pulseaudio
-
-    # utilities
-    pacman -S --noconfirm emacs pavucontrol firefox gnome-keyring lshw neofetch git grub-customizer bash-completion wget
-
-    # lightdm login manager
-    # pacman -S lightdm lightdm-gtk-greeter
-    # systemctl enable lightdm
-
-    # yay
-    git clone https://aur.archlinux.org/yay.git /tmp/yay
-    cd /tmp/yay
-    makepkg -is --noconfirm
-
-    # ly
-    yay -S --noconfirm ly
-    sed -i 's/#asterisk = o/asterisk = o/g' /etc/ly/config.ini
-    sed -i 's/#hide_borders = true/hide_borders = true/g' /etc/ly/config.ini
-    sed -i 's/#lang = en/lang = en/g' /etc/ly/config.ini
-    sed -i 's/#load = true/load = true/g' /etc/ly/config.ini
-    sed -i 's/#save = true/save = true/g' /etc/ly/config.ini
-    systemctl enable ly
-
-    # betterlockscreen
-    yay -S --noconfirm betterlockscreen
-    betterlockscreen -u ~/Downloads/image.jpg
-    xfconf-query -c xfce4-session -p /general/LockCommand -s "betterlockscreen -l" --create -t string
-
     # openssh
     pacman -S --noconfirm openssh
     systemctl enable sshd
@@ -142,7 +110,7 @@ arch_install_swap() {
 }
 
 arch_install_timezone() {
-    timedatectl list-timezones
+    # timedatectl list-timezones
     timedatectl set-timezone Europe/Moscow
     systemctl enable systemd-timesyncd # daemon will synchronize our clock
 }
@@ -197,12 +165,8 @@ arch_install_locales() {
 
 arch_install_users() {
     echo root:root | chpasswd
-    # passwd
-    # add to the wheel group in favour to use the sudo mechanism
-    useradd -m -g users -G wheel idfumg
+    useradd -m -g users -G wheel idfumg # wheel group for the sudo mechanism
     echo idfumg:idfumg | chpasswd
-    # passwd idfumg
-    # EDITOR=nano visudo # enable/uncomment sudo for the wheel group
 }
 
 arch_install_mkinitcpio() {
@@ -236,13 +200,6 @@ arch_install_steam() {
     # Settings->Steam Play->Enable Steam Play for all other titles
 }
 
-arch_finish() {
-    echo -e "\e[1;32mDone! Type exit, umount -a and reboot"
-    # exit # leave the chroot environment
-    # umount -a # unmount everything
-    # reboot
-}
-
 arch_install_wireless_firmware() {
     # Qualcomm Atheros QCZ6174 802.11ac Wireless Network Adapter (rev 32)
     # https://github.com/kvalo/ath10k-firmware/tree/master/QCA6174/hw3.0
@@ -269,13 +226,64 @@ arch_install_wireless_firmware() {
     # sudo pacman -S iw
     # sudo iw dev wlp7s0 station dump # check wifi channel speed
     # sudo iwconfig wlp7s0 txpower 15 # change the power of the transmiter
+    0
+}
+
+arch_finish() {
+    echo -e "\e[1;32mDone! Type exit, umount -a and reboot"
+    # exit # leave the chroot environment
+    # umount -a # unmount everything
+    # reboot
+}
+
+arch_setup_users() {
+    passwd
+    passwd idfumg
+    EDITOR=nano visudo # enable/uncomment sudo for the wheel group
+}
+
+arch_install_packages2() {
+    # X
+    pacman -S --noconfirm xorg-server xfce4 xfce4-goodies xf86-video-nouveau
+
+    # audio
+    pacman -S --noconfirm pulseaudio
+
+    # utilities
+    pacman -S --noconfirm emacs pavucontrol firefox gnome-keyring lshw neofetch git grub-customizer bash-completion wget
+
+    # lightdm login manager
+    # pacman -S lightdm lightdm-gtk-greeter
+    # systemctl enable lightdm
+
+    # yay
+    git clone https://aur.archlinux.org/yay.git /tmp/yay
+    cd /tmp/yay
+    makepkg -is --noconfirm
+
+    # ly
+    yay -S --noconfirm ly
+    sed -i 's/#asterisk = o/asterisk = o/g' /etc/ly/config.ini
+    sed -i 's/#hide_borders = true/hide_borders = true/g' /etc/ly/config.ini
+    sed -i 's/#lang = en/lang = en/g' /etc/ly/config.ini
+    sed -i 's/#load = true/load = true/g' /etc/ly/config.ini
+    sed -i 's/#save = true/save = true/g' /etc/ly/config.ini
+    systemctl enable ly
+
+    # betterlockscreen
+    yay -S --noconfirm betterlockscreen
+    betterlockscreen -u ~/Downloads/image.jpg
+    xfconf-query -c xfce4-session -p /general/LockCommand -s "betterlockscreen -l" --create -t string
 }
 
 main() {
+    local ARCH_DISK_UEFI=sda1
+    local ARCH_DISK_LVM=sda2
+    local ARCH_VGNAME=vg0
+
     arch_start
-    arch_install_fs_and_lvm sda1 sda2
-    arch_install_chroot_directories_hierarchy
-    arch_mount_partitions_to_chroot_fs sda1
+    arch_install_fs_and_lvm $ARCH_DISK_UEFI $ARCH_DISK_LVM $ARCH_VGNAME
+    arch_mount_partitions_to_chroot_fs $ARCH_DISK_UEFI $ARCH_VGNAME
     arch_install_bases_and_go_to_the_chroot_jail
     arch_install_packages
     arch_install_swap
@@ -289,4 +297,8 @@ main() {
     arch_install_steam
     arch_install_wireless_firmware
     arch_finish
+    # arch_setup_users
+    # arch_install_packages2
 }
+
+main
