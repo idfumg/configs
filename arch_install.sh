@@ -249,7 +249,7 @@ arch_setup_users() {
 
 arch_install_packages_user() {
     # X
-    sudo pacman -S --noconfirm xorg-server xfce4 xfce4-goodies xf86-video-nouveau
+    sudo pacman -S --noconfirm xorg-server xorg-xset xfce4 xfce4-goodies xf86-video-nouveau
 
     # audio
     sudo pacman -S --noconfirm pulseaudio
@@ -269,12 +269,12 @@ arch_install_packages_user() {
 
     # ly
     yay -S --noconfirm ly
-    sed -i 's/#asterisk = o/asterisk = o/g' /etc/ly/config.ini
-    sed -i 's/#hide_borders = true/hide_borders = true/g' /etc/ly/config.ini
-    sed -i 's/#lang = en/lang = en/g' /etc/ly/config.ini
-    sed -i 's/#load = true/load = true/g' /etc/ly/config.ini
-    sed -i 's/#save = true/save = true/g' /etc/ly/config.ini
-    systemctl enable ly
+    sudo sed -i 's/#asterisk = o/asterisk = o/g' /etc/ly/config.ini
+    sudo sed -i 's/#hide_borders = true/hide_borders = true/g' /etc/ly/config.ini
+    sudo sed -i 's/#lang = en/lang = en/g' /etc/ly/config.ini
+    sudo sed -i 's/#load = true/load = true/g' /etc/ly/config.ini
+    sudo sed -i 's/#save = true/save = true/g' /etc/ly/config.ini
+    sudo systemctl enable ly
 
     # betterlockscreen
     yay -S betterlockscreen
