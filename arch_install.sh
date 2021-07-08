@@ -24,6 +24,7 @@ arch_start() {
 arch_install_fs_and_lvm() {
     if [ ! $# -eq 3 ]; then
         echo "Usage: ${FUNCNAME[0]} uefi_disk lvm_disk volume_group_name"
+        exit 1
     fi
 
     local ARCH_DISK_UEFI=$1
@@ -55,6 +56,7 @@ arch_install_fs_and_lvm() {
 arch_mount_partitions_to_chroot_fs() {
     if [ ! $# -eq 2 ]; then
         echo "Usage: ${FUNCNAME[0]} uefi_disk volume_group_name"
+        exit 1
     fi
 
     local ARCH_DISK_UEFI=$1
@@ -79,34 +81,42 @@ arch_install_packages_system() {
     # enable multilib repository
     sed -i "s/#\[multilib\]/\[multilib\]\nInclude\ =\ \/etc\/pacman\.d\/mirrorlist/g" /etc/pacman.conf
 
+    # update repositories
     pacman -Syy
 
+    local CMD=""
+
     # system
-    pacman -S --noconfirm base-devel nano dialog lvm2 sudo
+    CMD="$CMD base-devel nano dialog lvm2 sudo"
 
     # linux
-    pacman -S --noconfirm linux linux-headers linux-lts linux-lts-headers linux-firmware
+    CMD="$CMD linux linux-headers linux-lts linux-lts-headers linux-firmware"
 
     # network
-    pacman -S --noconfirm wpa_supplicant wireless_tools netctl networkmanager network-manager-applet net-tools ethtool
-    systemctl enable NetworkManager
+    CMD="$CMD wpa_supplicant wireless_tools netctl networkmanager network-manager-applet net-tools ethtool"
 
     # grub packages
-    pacman -S --noconfirm grub dosfstools os-prober mtools efibootmgr
+    CMD="$CMD grub dosfstools os-prober mtools efibootmgr"
 
     # graphics card
-    pacman -S --noconfirm nvidia nvidia-lts nvidia-utils nvidia-settings nvtop
+    CMD="$CMD nvidia nvidia-lts nvidia-utils nvidia-settings nvtop"
 
     # graphics card packages for the virtualbox
-    # pacman -S virtualbox-guest-utils xf86-video-vmware
-    # systemctl enable vboxservice # for the virtual box graphics card drivers
+    # CMD="$CMD virtualbox-guest-utils xf86-video-vmware"
 
     # cpu
-    pacman -S --noconfirm intel-ucode
+    CMD="$CMD intel-ucode"
 
     # openssh
-    pacman -S --noconfirm openssh
+    CMD="$CMD openssh"
+
+    # final binary execution
+    pacman -S --noconfirm $CMD
+
+    # enable services
+    systemctl enable NetworkManager
     systemctl enable sshd
+    # systemctl enable vboxservice
 }
 
 arch_install_swap() {
@@ -129,6 +139,7 @@ arch_install_timezone() {
 arch_install_hostname() {
     if [ ! $# -eq 1 ]; then
         echo "Usage: ${FUNCNAME[0]} hostname"
+        exit 1
     fi
 
     local ARCH_HOSTNAME=$1
@@ -247,22 +258,33 @@ arch_setup_users() {
     sudo passwd idfumg
 }
 
-arch_install_packages_user() {
+arch_install_packages_user_arch() {
+    local CMD=""
+
     # X
-    sudo pacman -S --noconfirm xorg-server xorg-xset xfce4 xfce4-goodies xf86-video-nouveau
+    CMD="$CMD xorg-server xorg-xset xfce4 xfce4-goodies xf86-video-nouveau"
 
     # audio
-    sudo pacman -S --noconfirm pulseaudio
+    CMD="$CMD pulseaudio"
 
     # utilities
-    sudo pacman -S --noconfirm emacs pavucontrol firefox gnome-keyring lshw neofetch git grub-customizer bash-completion wget
+    CMD="$CMD emacs pavucontrol firefox gnome-keyring lshw neofetch git grub-customizer bash-completion wget"
 
     # lightdm login manager
-    # pacman -S lightdm lightdm-gtk-greeter
-    # systemctl enable lightdm
+    # CMD="$CMD lightdm lightdm-gtk-greeter"
 
+    # go
+    CMD="$CMD go"
+
+    # final binary execution
+    sudo pacman -S --noconfirm $CMD
+
+    # enable services
+    # systemctl enable lightdm
+}
+
+arch_install_packages_user_aur() {
     # yay
-    sudo pacman -S --noconfirm go
     git clone https://aur.archlinux.org/yay.git /tmp/yay
     cd /tmp/yay
     makepkg -is
@@ -315,14 +337,24 @@ arch_main_chroot() {
 
 arch_main_after_reboot() {
     arch_setup_users
-    arch_install_packages_user
+    arch_install_packages_user_arch
+    arch_install_packages_user_aur
     arch_install_steam
 }
 
 main() {
-    arch_main_live
-    # arch_main_chroot
-    # arch_main_after_reboot
+    if [ ! $# -eq 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} [live, chroot, reboot]"
+        exit 1
+    fi
+
+    if [ $1 == "live" ]; then
+        arch_main_live
+    elif [ $1 == "chroot" ]; then
+        arch_main_chroot
+    elif [ $1 == "reboot" ]; then
+        arch_main_after_reboot
+    fi
 }
 
-main
+main $@
