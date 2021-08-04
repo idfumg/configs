@@ -161,7 +161,15 @@ arch_install_nameservers() {
 arch_install_locales() {
     sed -i 's/#\(en_US\.UTF-8\)/\1/g' /etc/locale.gen # uncomment the en_US locale
     sed -i 's/#\(ru_RU\.UTF-8\)/\1/g' /etc/locale.gen # uncomment the ru_RU locale
-    locale-gen # generate the uncommented locale
+
+    localedef -c -i ru_RU -f CP1251 ru_RU.CP1251
+    localedef -c -i ru_RU -f IBM866 ru_RU.IBM866
+
+    echo 'ru_RU.IBM866 IBM866' >> /etc/locale.gen # add ibm866 locale support
+    echo 'ru_RU.CP1251 CP1251' >> /etc/locale.gen # add cp1251 locale support
+    # env LANG=ru_RU.CP1251 beep-media-player
+
+    locale-gen # generate locales
 
     # /etc/rc.conf
     echo "LANGUAGE=en_US.UTF-8" | tee /etc/rc.conf
@@ -276,6 +284,9 @@ arch_install_packages_user_arch() {
     # go
     CMD="$CMD go"
 
+    # terminal emulator that can support ibm866 and cp1251 encodings well
+    CMD="$CMD konsole"
+
     # final binary execution
     sudo pacman -S --noconfirm $CMD
 
@@ -302,6 +313,9 @@ arch_install_packages_user_aur() {
     yay -S betterlockscreen
     betterlockscreen -u /configs/arch_image.jpg
     xfconf-query -c xfce4-session -p /general/LockCommand -s "betterlockscreen -l" --create -t string
+
+    # iosevka font
+    yay -S --noconfirm ttf-iosevka
 }
 
 arch_install_steam() {
