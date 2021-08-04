@@ -288,6 +288,9 @@ arch_install_packages_user_arch() {
     # terminal emulator that can support ibm866 and cp1251 encodings well
     CMD="$CMD konsole"
 
+    # app launcher
+    CMD="$CMD synapse"
+
     # final binary execution
     sudo pacman -S --noconfirm $CMD
 

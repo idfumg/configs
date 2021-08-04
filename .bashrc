@@ -277,6 +277,7 @@ sirena_start_docker() {
            --privileged \
            --rm \
            --name sirena \
+           --volume /var/run/dbus/system_bus_socket:/var/run/dbus/system_bus_socket:rw \
            -d \
            -u $(id -u $USER):$(id -g $USER) \
            -v $PWD:${SIRENA_PATH_DOCKER} \
@@ -292,6 +293,13 @@ sirena_stop_docker() {
 
 sirena_start_postgresql() {
     sirena_exec_user root:root "service postgresql start"
+    sirena_postgresql_command "SET TIME ZONE 'Europe/Moscow';"
+    sirena_postgresql_command "ALTER DATABASE postgres SET timezone TO 'Europe/Moscow';"
+    sirena_postgresql_command "SHOW timezone;"
+
+    # sudo grep zone ../db/postgresql/postgresql.conf
+    # log_timezone = 'Europe/Moscow'
+    # timezone = 'Europe/Moscow'
 }
 
 sirena_stop_postgresql() {
@@ -325,12 +333,17 @@ sirena_data_oracle() {
 }
 
 sirena_start_oracle() {
+    sirena_oracle_command "ALTER DATABASE SET TIME_ZONE='Europe/Moscow';"
     sirena_oracle_command "startup;"
     sirena_oracle_command "ALTER USER system IDENTIFIED BY manager ACCOUNT UNLOCK;"
     sirena_oracle_command "ALTER SYSTEM SET open_cursors = 2500 SCOPE=BOTH;"
     sirena_oracle_command "GRANT CREATE SESSION TO stable;"
     sirena_oracle_command "GRANT CREATE SESSION TO trunk;"
     sirena_oracle_command "GRANT CREATE SESSION TO astra;"
+    sirena_oracle_command "ALTER SESSION SET TIME_ZONE='Europe/Moscow';"
+    sirena_oracle_command "SELECT dbtimezone FROM DUAL;"
+    sirena_oracle_command "SELECT sessiontimezone FROM DUAL;"
+    sirena_oracle_command "select systimestamp from dual;"
 }
 
 sirena_stop_oracle() {
@@ -392,6 +405,9 @@ sirena_init_postgres() {
     sirena_postgresql_command "create user system encrypted password 'manager' superuser;"
     sirena_postgresql_command "create user etick_test encrypted password 'etick' superuser;"
     sirena_postgresql_command "create user astra encrypted password 'astra' superuser;"
+    sirena_postgresql_command "SET TIME ZONE 'Europe/Moscow';"
+    sirena_postgresql_command "ALTER DATABASE postgres SET timezone TO 'Europe/Moscow';"
+    sirena_postgresql_command "SHOW timezone;"
     sirena_stop_postgresql
 }
 
@@ -406,6 +422,11 @@ sirena_init_oracle() {
     sirena_start_oracle
     sirena_oracle_command "ALTER SYSTEM SET open_cursors = 2500 SCOPE=BOTH;"
     sirena_oracle_command "ALTER USER SYSTEM IDENTIFIED BY MANAGER ACCOUNT UNLOCK;"
+    sirena_oracle_command "ALTER DATABASE SET TIME_ZONE='Europe/Moscow';"
+    sirena_oracle_command "ALTER SESSION SET TIME_ZONE='Europe/Moscow';"
+    sirena_oracle_command "SELECT dbtimezone FROM DUAL;"
+    sirena_oracle_command "SELECT sessiontimezone FROM DUAL;"
+    sirena_oracle_command "select systimestamp from dual;"
     sirena_init_oracle_copy_db
     sirena_stop_oracle
 }
@@ -432,12 +453,56 @@ sirena_init_docker() {
 
 sirena_build() {
     local GCC_VERSIONS="
-export LOCALCC=gcc-8
-export LOCALCXX=g++-8
-export CC=gcc-8
-export CXX=g++-8"
+export LOCALCC='gcc-8 -fsanitize=address'
+export LOCALCXX='g++-8 -fsanitize=address'
+export CC='gcc-8 -fsanitize=address'
+export CXX='g++-8 -fsanitize=address'"
 
-    local SIRENA_BUILD_VARS="LOCALCC=gcc-8 LOCALCXX=g++-8 CC=gcc-8 CXX=g++-8 BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=${ENABLE_GLIBCXX_DEBUG} LANG=en_US.UTF-8 LANGUAGE=en_US PLATFORM=m64"
+    local SIRENA_BUILD_VARS="LOCALCC='gcc-8 -fsanitize=address' LOCALCXX='g++-8 -fsanitize=address' CC='gcc-8 -fsanitize=address' CXX='g++-8 -fsanitize=address' BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=${ENABLE_GLIBCXX_DEBUG} LANG=en_US.UTF-8 LANGUAGE=en_US PLATFORM=m64"
+
+    local gcc_version="
+    echo CC=\${CC}
+    echo CXX=\${CXX}
+    echo LOCALCC=\${LOCALCC}
+    echo LOCALCXX=\${LOCALCXX}
+    echo ''
+    echo ''
+    echo 'Compiler configuration and include paths'
+    echo \$(\${CC} -xc++ -E -v -)
+    echo ''
+    echo ''
+    echo ''"
+
+    local build_command="$GCC_VERSIONS && $gcc_version && cd ${SIRENA_PATH_DOCKER} && echo Path: \${PWD} && $SIRENA_BUILD_VARS ./buildFromScratch.sh"
+
+    local database_login=$1
+    local database_password=$2
+
+    if [ -z $database_login ] || [ -z $database_password ]; then
+        sirena_exec "$build_command"
+        return 0
+    fi
+
+    if [ $# -ge 2 ]; then
+        local ARGS=${@:3}
+        if [ -n $database_login ] && [ -n $database_password ]; then
+            sirena_exec "$build_command $database_login/$database_password $ARGS"
+            return 0
+        fi
+    fi
+
+    echo "Error! Wrong function parameters!"
+    return 1
+}
+
+sirena_build_clang() {
+    local GCC_VERSIONS="
+export LOCALCC='clang-6.0 -fsanitize=address'
+export LOCALCXX='clang++-6.0 -fsanitize=address'
+export CC='clang-6.0 -fsanitize=address'
+export CXX='clang++-6.0 -fsanitize=address'"
+
+    local SIRENA_BUILD_VARS="LOCALCC='clang-6.0 -fsanitize=address' LOCALCXX='clang++-6.0 -fsanitize=address' CC='clang-6.0 -fsanitize=address' CXX='clang++-6.0 -fsanitize=address' BUILD_TESTS=1 ENABLE_SHARED=1 ENABLE_GLIBCXX_DEBUG=${ENABLE_GLIBCXX_DEBUG} LANG=en_US.UTF-8 LANGUAGE=en_US PLATFORM=m64"
 
     local gcc_version="
     echo CC=\${CC}
@@ -476,12 +541,12 @@ export CXX=g++-8"
 
 astra_build() {
     local GCC_VERSIONS="
-export LOCALCC=gcc-7
-export LOCALCXX=g++-7
-export CC=gcc-7
-export CXX=g++-7"
+export LOCALCC=gcc-8
+export LOCALCXX=g++-8
+export CC=gcc-8
+export CXX=g++-8"
 
-    local ASTRA_BUILD_VARS="XP_NO_RECHECK=1 XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim PG_HOST=${PG_HOST:-localhost} CPP_STD_VERSION=c++17 PLATFORM=m64 BUILD_TESTS=1 ENABLE_SHARED=1 LANG=en_US.UTF-8 LANGUAGE=en_US SYSPAROL=system/manager MY_LOCAL_CFLAGS=-Wno-error=maybe-uninitialized"
+    local ASTRA_BUILD_VARS="ENABLE_ORACLE=1 XP_NO_RECHECK=1 XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim PG_HOST=${PG_HOST:-localhost} CPP_STD_VERSION=c++17 PLATFORM=m64 BUILD_TESTS=1 ENABLE_SHARED=1 LANG=en_US.UTF-8 LANGUAGE=en_US SYSPAROL=system/manager MY_LOCAL_CFLAGS=\"-Wno-error=maybe-uninitialized -gz\" MY_LOCAL_LDFLAGS=\"-gz\""
 
     local gcc_version="
     echo CC=\${CC}
@@ -498,7 +563,7 @@ export CXX=g++-7"
 
     local build_command="$GCC_VERSIONS && $gcc_version && cd ${SIRENA_PATH_DOCKER} && echo Path: \${PWD} && $ASTRA_BUILD_VARS ./buildFromScratch.sh"
 
-    local build_modules="--build_external_libs --configlibs --buildlibs --configastra --buildastra --createtcl"
+    local build_modules="--build_external_libs --configlibs --buildlibs --configastra --buildastra --createtcl --createdb"
 
     local database_login=$1
     local database_password=$2
@@ -538,6 +603,10 @@ astra_build_stable() {
 
 sirena_build_trunk_db() {
     sirena_build trunk trunk --createdb
+}
+
+astra_build_trunk_db() {
+    astra_build astra_trunk astra_trunk --createtcl --createdb
 }
 
 sirena_build_stable_db() {
@@ -682,6 +751,28 @@ sirena_ts() {
     fi
 }
 
+astra_ts() {
+    local FILENAME=$1
+    local ARGS=${@:2}
+
+    if [ $# -lt 1 ]; then
+        echo "Usage: ${FUNCNAME[0]} test_name [test_number test_number ...]"
+        return 1
+    fi
+
+    if [ $# -eq 1 ]; then
+        sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && ./tscript.sh $FILENAME"
+        return 0
+    fi
+
+    if [ $# -gt 1 ]; then
+        for num in $ARGS; do
+            sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && ./tscript.sh $FILENAME $num"
+        done
+        return 0
+    fi
+}
+
 sirena_test() {
     if [ ! $# -eq 1 ] && [ ! $# -eq 2 ]; then
         echo "Usage: ${FUNCNAME[0]} module_name [test_name]"
@@ -697,6 +788,11 @@ sirena_test() {
 }
 
 astra_test() {
+    if [ $# -eq 2 ]; then
+        sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && XP_LIST=$1.$2 make xp-tests"
+        return 0
+    fi
+
     sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make xp-tests-local"
 }
 
