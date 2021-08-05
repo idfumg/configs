@@ -291,6 +291,9 @@ arch_install_packages_user_arch() {
     # app launcher
     CMD="$CMD synapse"
 
+    # ssh
+    CMD="$CMD openssh"
+
     # final binary execution
     sudo pacman -S --noconfirm $CMD
 
@@ -360,6 +363,34 @@ arch_main_after_reboot() {
     arch_install_steam
 }
 
+arch_main_ssh() {
+    cd ~/
+    chmod 700 .ssh
+    cd .ssh
+    chmod -x *
+    chmod 600 id*
+    chmod 644 *.pub
+    ssh -T git@github.com
+    # git remote set-url origin git@github.com:idfumg/configs.git
+}
+
+arch_main_docker() {
+    local JSON='
+{
+    "graph": "/home/idfumg/1/docker",
+    "storage-driver": "overlay"
+}
+'
+    sudo pacman -S docker
+    mkdir -p /home/idfumg/1/docker
+    sudo echo $JSON > /etc/docker/daemon.json
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+
+    docker info|grep "Docker Root Dir"
+    rm -rf /var/lib/docker
+}
+
 main() {
     if [ ! $# -eq 1 ]; then
         echo "Usage: ${FUNCNAME[0]} [live, chroot, reboot]"
@@ -372,6 +403,10 @@ main() {
         arch_main_chroot
     elif [ $1 == "reboot" ]; then
         arch_main_after_reboot
+    elif [ $1 == "ssh" ]; then
+        arch_main_ssh
+    elif [ $1 == "docker" ]; then
+        arch_main_docker
     fi
 }
 
