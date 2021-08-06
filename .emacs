@@ -129,12 +129,16 @@
   (unless (require 'package)
     (error "Error! Can't find 'package!"))
 
+  (add-to-list 'load-path "~/.emacs.d/packages")
+  (require 's) ;; https://github.com/magnars/s.el
+  (require 'load-env-vars) ;; https://github.com/diasjorge/emacs-load-env-vars/blob/master/load-env-vars.el
+
   (package-initialize)
 
-  (let ((repos '(("marmalade" . "http://marmalade-repo.org/packages/")
-                 ("elpa" . "http://tromey.com/elpa/")
-                 ("melpa" . "http://melpa.milkbox.net/packages/")
-                 ("melpa-stable" . "https://stable.melpa.org/packages/"))))
+  (let ((repos '(
+		 ("melpa" . "https://melpa.org/packages/")
+		 ("elpa" . "https://elpa.gnu.org/packages/")
+		 )))
     (dolist (repo repos)
       (unless (assoc (car repo) package-archives)
         (add-to-list 'package-archives repo t))))
@@ -149,10 +153,10 @@
                     company
                     company-statistics
                     company-irony
-                    company-c-headers
+                    company-irony-c-headers
                     irony
 
-                    company-tabnine
+                    ;; company-tabnine
 
                     ;; python
                     anaconda-mode
@@ -204,7 +208,7 @@
 
                     ;; strings manipulations
                     ;; https://github.com/magnars/s.el
-                    s-buffer
+                    ;; s
 
                     ;; lists manipulations
                     ;; https://github.com/magnars/dash.el
@@ -217,7 +221,7 @@
 
                     ;; Lua packages
                     lua-mode
-                    company-lua
+                    ;; company-lua
 
                     ;; hash tables
                     ht
@@ -240,7 +244,7 @@
                     yaml-mode
 
                     ;; system environment
-                    load-env-vars
+                    ;;load-env-vars
                     dotenv-mode
 
                     )))
@@ -260,7 +264,8 @@
   (let ((envfile (expand-file-name "~/.env")))
     (if (file-exists-p envfile)
         (load-env-vars envfile)
-      (message "Error! .env file does not exist!"))))
+      (message "Error! .env file does not exist!")))
+  )
 
 (defun my/setup/font-size ()
   (let ((font-size-default "110")
@@ -408,7 +413,8 @@
 
   (defun my/font-size (font)
     (cond ((eq font 'iosevka)
-           (cond ((and (>= (my/screen-height) 1080) (>= (my/screen-width) 1920)) " 12")
+           (cond ((and (>= (my/screen-height) 1440) (>= (my/screen-width) 2560)) " 15")
+                 ((and (>= (my/screen-height) 1080) (>= (my/screen-width) 1920)) " 12")
                  ((and (>= (my/screen-height) 1050) (>= (my/screen-width) 1680)) " 19")
                  ((and (>= (my/screen-height) 1028) (>= (my/screen-width) 1680)) " 6")
                  (t " 16")))
@@ -987,7 +993,7 @@
     ;; (define-key irony-mode-map [remap complete-symbol] 'helm-company)
     ;; (add-to-list 'irony-cdb-search-directory-list ".." "../..")
     (add-to-list 'irony-additional-clang-options "-std=c++14")
-    (add-to-list 'company-backends 'company-irony 'company-c-headers)
+    (add-to-list 'company-backends 'company-irony 'company-irony-c-headers)
 
     ;; Do not ask which command to run when call `compile` command.
     (setq shell-file-name "bash")
@@ -1150,10 +1156,11 @@
     (setq helm-locate-fuzzy-match t)
     (helm-mode t)
 
-    (advice-add 'helm-ff-filter-candidate-one-by-one
-                :around (lambda (fcn file)
-                          (unless (string-match "\\.*\\.o$" file)
-                            (funcall fcn file)))))
+    ;; (advice-add 'helm-ff-filter-candidate-one-by-one
+    ;;             :around (lambda (fcn file)
+    ;;                       (unless (string-match "\\.*\\.o$" file)
+    ;;                         (funcall fcn file))))
+    )
 
   (add-hook 'after-init-hook 'my/setup/helm-hook))
 
@@ -1213,8 +1220,8 @@
     (company-statistics-mode)
     (global-company-mode)
 
-    (require 'company-tabnine)
-    (add-to-list 'company-backends #'company-tabnine)
+    ;; (require 'company-tabnine)
+    ;; (add-to-list 'company-backends #'company-tabnine)
     (setq company-idle-delay 0)
     (setq company-show-numbers t))
 
@@ -1470,7 +1477,7 @@
   (my/env/load)
   (my/setup/font-size)
 
-  (require 's-buffer)
+  ;; (require 's-buffer)
   (require 'dash)
 
   (my/setup/misc)
@@ -1678,7 +1685,7 @@
 
   (require 'request)
   (require 'json)
-  (require 's-buffer)
+  ;; (require 's-buffer)
 
   (-let [address (s-concat "u=" param)]
     (request
@@ -1812,12 +1819,10 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  '(custom-safe-themes
-   (quote
-    ("0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default)))
+   '("0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default))
  '(package-selected-packages
-   (quote
-    ((doom-modeline-mode 1)
-     doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag))))
+   '((doom-modeline-mode 1)
+     doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
