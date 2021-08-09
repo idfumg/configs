@@ -294,6 +294,15 @@ arch_install_packages_user_arch() {
     # ssh
     CMD="$CMD openssh"
 
+    # find files over the whole file system
+    CMD="$CMD mlocate"
+
+    # ag utility as a fast alternative to grep
+    CMD="$CMD the_silver_searcher"
+
+    # project files indexation
+    CMD="$CMD global"
+
     # final binary execution
     sudo pacman -S --noconfirm $CMD
 

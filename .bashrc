@@ -793,7 +793,7 @@ astra_test() {
         return 0
     fi
 
-    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make xp-tests-local"
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim make xp-tests-local"
 }
 
 sirena_test_rail() {

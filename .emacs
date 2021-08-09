@@ -190,6 +190,10 @@
                     helm-gtags
                     helm-company
 
+                    swiper-helm
+                    ivy
+                    counsel
+
                     ;; grep -> ack -> ag
                     ;; https://github.com/ggreer/the_silver_searcher
                     ;; sudo apt install silversearcher-ag
@@ -623,15 +627,40 @@
   (global-set-key [(control ?-)] 'highlight-symbol-prev)
   (global-set-key [(control meta backspace)] 'my/kill-back-to-indentation)
   (global-set-key [enter] 'newline-and-indent)
+
   (global-set-key [(meta ?x)] 'helm-M-x)
   (global-set-key [(meta ?y)] 'helm-show-kill-ring)
   (global-set-key [(control ?x) ?b] 'helm-buffers-list)
   (global-set-key [(meta ?s)] 'helm-occur)
-  (global-set-key [(control ?x) ?f] 'helm-locate)
-  (global-set-key [(control ?x) (control ?f)] 'helm-find-files)
-  (global-set-key [(control ?.)] 'helm-gtags-find-tag)
-  (global-set-key [(meta ?.)] 'helm-gtags-find-rtag)
-  (global-set-key [(control ?,)] 'helm-gtags-previous-history)
+  ;; (global-set-key [(control ?x) ?f] 'helm-locate)
+  ;; (global-set-key [(control ?x) (control ?f)] 'helm-find-files)
+  ;; (global-set-key [(control ?.)] 'helm-gtags-find-tag)
+  ;; (global-set-key [(meta ?.)] 'helm-gtags-find-rtag)
+  ;; (global-set-key [(control ?,)] 'helm-gtags-previous-history)
+
+  (ivy-mode)
+  (counsel-mode)
+  (setq ivy-use-virtual-buffers t)
+  (setq enable-recursive-minibuffers t)
+  ;; enable this if you want `swiper' to use it
+  (setq search-default-mode #'char-fold-to-regexp)
+  (global-set-key "\C-s" 'swiper-helm)
+  ;; (global-set-key (kbd "C-c C-r") 'ivy-resume)
+  ;; (global-set-key (kbd "<f6>") 'ivy-resume)
+  (global-set-key (kbd "M-x") 'counsel-M-x)
+  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+  (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+  (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+  (global-set-key (kbd "<f1> o") 'counsel-describe-symbol)
+  (global-set-key (kbd "<f1> l") 'counsel-find-library)
+  (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+  (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+  ;; (global-set-key (kbd "C-c g") 'counsel-git)
+  ;; (global-set-key (kbd "C-c j") 'counsel-git-grep)
+  (global-set-key (kbd "C-c a") 'counsel-ag)
+  (global-set-key (kbd "C-c f") 'counsel-locate) ;; sudo updatedb before use it
+  ;; (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+  ;; (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
 
   ;; (global-set-key [(control ?c) ?n ?t] 'neotree-toggle)
   ;; (global-set-key [(control ?c) ?n ?r] 'neotree-rename-node)
@@ -1113,6 +1142,7 @@
   (setq google-translate-default-target-language "ru")
   (setq indent-tabs-mode nil)
   (setq inhibit-startup-screen t)
+  (setq inhibit-startup-message t)
   (setq initial-major-mode (quote fundamental-mode))
   (setq jit-lock-chunk-size 1000)
   (setq jit-lock-defer-time 0.01)
@@ -1506,7 +1536,7 @@
   (my/setup/text-mode)
   (my/setup/system-monitor)
   ;; (my/setup/vlf)
-  (my/setup/helm)
+  ;; (my/setup/helm)
   (my/setup/neotree)
   (my/setup/server)
   (my/setup/smooth-scrolling)
@@ -1818,11 +1848,14 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(counsel-mode t)
  '(custom-safe-themes
    '("0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default))
+ '(ivy-mode t)
  '(package-selected-packages
-   '((doom-modeline-mode 1)
-     doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag)))
+   '(swiper-helm counsel swiper ivy use-package
+                 (doom-modeline-mode 1)
+                 doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
