@@ -623,6 +623,7 @@ sirena_make() {
 
 astra_make() {
     sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make -sj ${SIRENA_CPU_COUNT} $@"
+    astra_build astra_trunk astra_trunk --createtcl
 }
 
 sirena_make_libs() {
@@ -793,7 +794,8 @@ astra_test() {
         return 0
     fi
 
-    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim make xp-tests-local"
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim make xp-tests"
+    #sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim make xp-tests-local"
 }
 
 sirena_test_rail() {
@@ -989,7 +991,7 @@ gitea() {
 # GITHUB
 ################################################################################
 
-MY_CONFIGS="https://github.com/idfumg/MyConfigs.git"
+MY_CONFIGS="https://github.com/idfumg/configs.git"
 ELIXIR_SYNOPSIS="https://github.com/idfumg/ElixirSynopsis.git"
 LUA_SYNOPSIS="https://github.com/idfumg/LuaSynopsis.git"
 QT_SYNOPSIS="https://github.com/idfumg/QtSynopsis.git"
@@ -1204,7 +1206,7 @@ declare -a CONFIG_FILES=(
 .emacs
 )
 
-CONFIG_DESTINATION=~/1/github/MyConfigs/home
+CONFIG_DESTINATION=~/1/github/configs
 
 utils_backup_config() {
     cd $CONFIG_DESTINATION
