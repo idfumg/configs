@@ -158,10 +158,6 @@
 
                     ;; company-tabnine
 
-                    ;; python
-                    anaconda-mode
-                    company-anaconda
-
                     ;; highlight word
                     highlight-symbol
 
@@ -251,6 +247,16 @@
                     ;;load-env-vars
                     dotenv-mode
 
+                    ;; python
+                    anaconda-mode
+                    company-anaconda
+
+                    python-mode
+                    pyvenv
+                    lsp-mode
+                    flycheck
+                    flycheck-cython
+                    flycheck-pycheckers
                     )))
 
     (let ((package-list-was-refreshed? nil))
@@ -1053,7 +1059,34 @@
   (add-hook 'after-init-hook 'my/c-mode-file-extensions-hook))
 
 (defun my/setup/python ()
-  (setq python-shell-interpreter "python3")
+  (use-package company
+    :after lsp-mode
+    :hook (lsp-mode . company-mode))
+
+  (use-package python-mode
+    :ensure t
+    :hook (python-mode . lsp-deferred)
+    :hook (python-mode . flycheck-mode)
+    :custom
+    (python-shell-interpreter "python3"))
+    ;;(python-shell-interpreter "/home/idfumg/.local/bin/python3"))
+
+  (use-package pyvenv
+    :config
+    (pyvenv-mode 1))
+
+  (defun flycheck-python-setup ()
+    (flycheck-mode))
+  (add-hook 'python-mode-hook #'flycheck-python-setup)
+
+  ;; pip3 install --upgrade pip
+  ;; pip3 install --user python-language-server[all]
+  ;; pip3 install --user python-lsp-server
+  ;; export PATH=$PATH:/home/idfumg/.local/bin
+  ;; pylint --generate-rcfile > .pylintrc
+  ;; pylsp # check if pylsp server is available
+
+  ;; (setq python-shell-interpreter "python3")
   ;; (add-hook 'python-mode-hook
   ;;           (lambda()
   ;;             (run-python "/usr/bin/python")))
@@ -1858,9 +1891,9 @@
    '("0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default))
  '(ivy-mode t)
  '(package-selected-packages
-   '(swiper-helm counsel swiper ivy use-package
-                 (doom-modeline-mode 1)
-                 doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag)))
+   '(python pyvenv flycheck-pycheckers flycheck-cython flycheck lsp-mode python-mode swiper-helm counsel swiper ivy use-package
+            (doom-modeline-mode 1)
+            doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
