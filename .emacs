@@ -144,7 +144,7 @@
         (add-to-list 'package-archives repo t))))
 
   (let ((packages '(;; package management
-                    ;; use-package
+                    use-package
 
                     ;; hide modes from mode-line
                     ;; diminish
@@ -251,12 +251,14 @@
                     anaconda-mode
                     company-anaconda
 
-                    python-mode
+                    ;; python-mode
                     pyvenv
                     lsp-mode
                     flycheck
                     flycheck-cython
                     flycheck-pycheckers
+                    pylint
+                    flycheck-mypy
                     )))
 
     (let ((package-list-was-refreshed? nil))
@@ -703,6 +705,7 @@
       (my/map-terminal-key sequence)))
 
   ;; (global-set-key [(control return)] 'helm-company))
+  ;; (global-unset-key [(control ?c) ?c])
   )
 
 (defun my/setup/c++ ()
@@ -1068,16 +1071,14 @@
     :hook (python-mode . lsp-deferred)
     :hook (python-mode . flycheck-mode)
     :custom
-    (python-shell-interpreter "python3"))
-    ;;(python-shell-interpreter "/home/idfumg/.local/bin/python3"))
+      (flycheck-add-next-checker 'python-pylint 'python-mypy 'python-flake8 'lsp))
+      ;;(setq python-shell-interpreter "python3")))
 
   (use-package pyvenv
     :config
     (pyvenv-mode 1))
 
-  (defun flycheck-python-setup ()
-    (flycheck-mode))
-  (add-hook 'python-mode-hook #'flycheck-python-setup)
+  ;; (global-set-key [(control ?x) ?m] 'python-shell-send-buffer)
 
   ;; pip3 install --upgrade pip
   ;; pip3 install --user python-language-server[all]
@@ -1566,7 +1567,7 @@
 
   (my/setup/encodings)
   (my/setup/c++)
-  (my/setup/python)
+  ;;(my/setup/python)
   (my/setup/browser)
   (my/setup/org)
   (my/setup/command-history)
@@ -1891,7 +1892,7 @@
    '("0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default))
  '(ivy-mode t)
  '(package-selected-packages
-   '(python pyvenv flycheck-pycheckers flycheck-cython flycheck lsp-mode python-mode swiper-helm counsel swiper ivy use-package
+   '(pylint python pyvenv flycheck-pycheckers flycheck-cython flycheck lsp-mode python-mode swiper-helm counsel swiper ivy use-package
             (doom-modeline-mode 1)
             doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag)))
 (custom-set-faces
