@@ -13,7 +13,7 @@ esac
 HISTCONTROL=ignoreboth
 
 # append to the history file, don't overwrite it
-shopt -s histappend
+# shopt -s histappend
 
 # for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
 HISTSIZE=1000
@@ -21,7 +21,7 @@ HISTFILESIZE=2000
 
 # check the window size after each command and, if necessary,
 # update the values of LINES and COLUMNS.
-shopt -s checkwinsize
+# shopt -s checkwinsize
 
 # If set, the pattern "**" used in a pathname expansion context will
 # match all files and zero or more directories and subdirectories.
@@ -108,13 +108,13 @@ fi
 # enable programmable completion features (you don't need to enable
 # this, if it's already enabled in /etc/bash.bashrc and /etc/profile
 # sources /etc/bash.bashrc).
-if ! shopt -oq posix; then
-  if [ -f /usr/share/bash-completion/bash_completion ]; then
-    . /usr/share/bash-completion/bash_completion
-  elif [ -f /etc/bash_completion ]; then
-    . /etc/bash_completion
-  fi
-fi
+# if ! shopt -oq posix; then
+#   if [ -f /usr/share/bash-completion/bash_completion ]; then
+#     . /usr/share/bash-completion/bash_completion
+#   elif [ -f /etc/bash_completion ]; then
+#     . /etc/bash_completion
+#   fi
+# fi
 
 export PLATFORM=m64
 
@@ -623,7 +623,6 @@ sirena_make() {
 
 astra_make() {
     sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make -sj ${SIRENA_CPU_COUNT} $@"
-    astra_build astra_trunk astra_trunk --createtcl
 }
 
 sirena_make_libs() {
@@ -660,6 +659,10 @@ sirena_clean() {
 
 astra_clean() {
     sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && make -C $@ clean"
+}
+
+sirena_clean_libs() {
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/sirenalibs && make clean"
 }
 
 sirena_clean_rail() {
@@ -794,8 +797,7 @@ astra_test() {
         return 0
     fi
 
-    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim make xp-tests"
-    #sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim make xp-tests-local"
+    sirena_exec "cd ${SIRENA_PATH_DOCKER}/src && XP_LIST_EXCLUDE=SqlUtil,Serverlib,httpsrv,httpsrv_ext,ssim make xp-tests-local"
 }
 
 sirena_test_rail() {
@@ -816,6 +818,51 @@ sirena_test_emd() {
 
 sirena_rsync() {
     rsync -vu rail/*{cc,h} apushkin@test:/home/tst/sirena/src/rail/
+}
+
+sirena_rsync_rail_files() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: ${FUNCNAME[0]} [files_names]"
+        return 1
+    fi
+
+    rsync -vu $@ idfumg@10.1.7.94:/home/idfumg/1/work/sirena_trunk/src/rail/
+}
+
+sirena_rsync_src_files() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: ${FUNCNAME[0]} [files_names]"
+        return 1
+    fi
+
+    rsync -vu $@ idfumg@10.1.7.94:/home/idfumg/1/work/sirena_trunk/src/
+}
+
+sirena_rsync_rail_pg_tables() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: ${FUNCNAME[0]} [files_names]"
+        return 1
+    fi
+
+    rsync -vu sql/bases/sirena_pg/bases_pg/rail/1Tab/$@ idfumg@10.1.7.94:/home/idfumg/1/work/sirena_trunk/sql/bases/sirena_pg/bases_pg/rail/1Tab/
+}
+
+sirena_rsync_rail_pg_indexes() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: ${FUNCNAME[0]} [files_names]"
+        return 1
+    fi
+
+    rsync -vu sql/bases/sirena_pg/bases_pg/rail/1Tind/$@ idfumg@10.1.7.94:/home/idfumg/1/work/sirena_trunk/sql/bases/sirena_pg/bases_pg/rail/1Tind/
+}
+
+sirena_rsync_rail_pg_seqs() {
+    if [ $# -eq 0 ]; then
+        echo "Usage: ${FUNCNAME[0]} [files_names]"
+        return 1
+    fi
+
+    rsync -vu sql/bases/sirena_pg/bases_pg/rail/3Seq/$@ idfumg@10.1.7.94:/home/idfumg/1/work/sirena_trunk/sql/bases/sirena_pg/bases_pg/rail/3Seq/
 }
 
 sirena_connect_test() {
@@ -991,7 +1038,7 @@ gitea() {
 # GITHUB
 ################################################################################
 
-MY_CONFIGS="https://github.com/idfumg/configs.git"
+MY_CONFIGS="https://github.com/idfumg/MyConfigs.git"
 ELIXIR_SYNOPSIS="https://github.com/idfumg/ElixirSynopsis.git"
 LUA_SYNOPSIS="https://github.com/idfumg/LuaSynopsis.git"
 QT_SYNOPSIS="https://github.com/idfumg/QtSynopsis.git"
@@ -1206,7 +1253,7 @@ declare -a CONFIG_FILES=(
 .emacs
 )
 
-CONFIG_DESTINATION=~/1/github/configs
+CONFIG_DESTINATION=~/1/github/MyConfigs/home
 
 utils_backup_config() {
     cd $CONFIG_DESTINATION
@@ -1252,11 +1299,73 @@ utils_restore_config() {
     cd -
 }
 
-
 export LIBGL_ALWAYS_INDIRECT=1
 
 # git clone https://github.com/magicmonty/bash-git-prompt.git ~/.bash-git-prompt --depth=1
-if [ -f"$HOME/.bash-git-prompt/gitprompt.sh" ]; then
-   GIT_PROMPT_ONLY_IN_REPO=1
-   source $HOME/.bash-git-prompt/gitprompt.sh
-fi
+# if [ -f"$HOME/.bash-git-prompt/gitprompt.sh" ]; then
+#    GIT_PROMPT_ONLY_IN_REPO=1
+#    source $HOME/.bash-git-prompt/gitprompt.sh
+# fi
+
+alias git_fetch_with_prune="git fetch --all --prune"
+
+export LC_ALL=en_US.UTF-8
+
+# Golang
+export GOROOT=/usr/local/go
+export PATH=$GOROOT/bin:$PATH
+export GOPATH=~/.local/go
+export GOBIN=$GOPATH/bin
+export PATH=$GOBIN:$PATH
+
+# Highlighting
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
+alias cat="bat --paging=never"
+alias bathelp='bat --plain --language=help'
+help() {
+    "$@" --help 2>&1 | bathelp
+}
+batdiff() {
+    git diff --name-only --relative --diff-filter=d | xargs bat --diff
+}
+
+# ls
+alias ls="exa -a --group-directories-first --icons --colour-scale -F -b --color=always"
+alias lls="exa --all --icons --colour-scale -l -F -b -g -h --time-style=long-iso --color=always --sort=modified"
+
+# curl
+alias curl="xh"
+
+# tree
+alias tree="tre"
+
+# du
+alias du="dust"
+
+# ps
+alias ps="procs -i TcpPort -i UdpPort -i State -i VmRss -i StartTime -i ReadBytes -i WriteBytes"
+
+# ping
+alias ping="gping"
+
+# top
+alias top="btm"
+
+# find
+#alias find="fd"
+
+# df
+alias df="duf --theme dark --all"
+
+# tail and grc highlighting
+alias tail="grc tail"
+
+# grep and grc highlighting
+alias grep="grc grep"
+
+# mkcd() {
+#     mkdir -p $1 & cd $1
+# }
+
+# Load Angular CLI autocompletion.
+# source <(ng completion script)

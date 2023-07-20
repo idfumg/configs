@@ -50,6 +50,7 @@
 (defun my/sirena/in-project-now? ()
   (interactive)
   (when (buffer-file-name)
+    (message (buffer-file-name))
     (-when-let (svn-root (my/vc/get-root (file-name-directory (buffer-file-name))))
       (or (my/sirena/sirena-svn? svn-root)
           (my/sirena/sirena-git? svn-root)))))
@@ -66,11 +67,11 @@
 
 (defun my/sirena-encoding ()
   (cond ((eq system-type 'gnu/linux) 'cp866-unix)
-        (t 'cp866)))
+        (t 'cp866-unix)))
 
 (defun my/common-project-encoding ()
   (cond ((eq system-type 'gnu/linux) 'utf-8-unix)
-        (t 'utf-8)))
+        (t 'utf-8-unix)))
 
 (defun my/is-sirena-encoding? ()
   (eq buffer-file-coding-system (my/sirena-encoding)))
@@ -97,7 +98,8 @@
   (setq default-input-method 'russian-computer)
 
   (prefer-coding-system encoding)
-  (prefer-coding-system 'utf-8-unix)
+  ;; (prefer-coding-system 'utf-8-unix)
+  (prefer-coding-system encoding)
 
   (set-language-environment 'UTF-8)
   (set-default-coding-systems encoding)
@@ -105,17 +107,20 @@
   (set-file-name-coding-system encoding)
   (set-keyboard-coding-system encoding)
   (set-selection-coding-system encoding)
+  ;; (set-buffer-file-coding-system encoding)
 
   (with-system windows-nt
     (set-w32-system-coding-system encoding)
     (setq w32-system-coding-system encoding))
 
   (advice-add 'revert-buffer-with-coding-system :around #'my/disable-yornp)
-  (when (and buffer-file-name (eq buffer-file-coding-system encoding))
-    (revert-buffer-with-coding-system encoding)))
+  (when (and buffer-file-name (not (eq buffer-file-coding-system encoding)))
+    (revert-buffer-with-coding-system encoding))
+  )
 
 (defun my/setup/encodings ()
   (with-sirena-project
+    (message "This is sirena project...")
     (unless (my/is-sirena-encoding?)
       (message "Configuring sirena project encoding...")
       (my/setup-encodings (my/sirena-encoding))))
@@ -132,6 +137,7 @@
   (add-to-list 'load-path "~/.emacs.d/packages")
   (require 's) ;; https://github.com/magnars/s.el
   (require 'load-env-vars) ;; https://github.com/diasjorge/emacs-load-env-vars/blob/master/load-env-vars.el
+  (require 'copilot) ;; https://github.com/zerolfx/copilot.el
 
   (package-initialize)
 
@@ -157,6 +163,10 @@
                     irony
 
                     ;; company-tabnine
+
+                    ;; python
+                    anaconda-mode
+                    company-anaconda
 
                     ;; highlight word
                     highlight-symbol
@@ -247,18 +257,36 @@
                     ;;load-env-vars
                     dotenv-mode
 
-                    ;; python
-                    anaconda-mode
-                    company-anaconda
-
-                    ;; python-mode
-                    pyvenv
+                    ;; golang
+                    go-mode
                     lsp-mode
+                    lsp-ui
+                    ;;company-mode
+                    lsp-treemacs
+                    helm-lsp
+                    dap-mode
+
+                    ;; github copilot
+                    s
+                    dash
+                    editorconfig
+
                     flycheck
-                    flycheck-cython
-                    flycheck-pycheckers
-                    pylint
-                    flycheck-mypy
+
+                    ;; Should be called at the first time after installation
+                    ;; M-x all-the-icons-install-fonts
+                    all-the-icons
+                    doom-modeline
+                    doom-themes
+
+                    ;; ui improvements
+                    ivy
+                    which-key
+                    ivy-rich
+                    helpful
+
+                    js2-mode
+
                     )))
 
     (let ((package-list-was-refreshed? nil))
@@ -424,29 +452,24 @@
     (find-font (font-spec :name font)))
 
   (defun my/font-size (font)
-    (if (getenv "EMACS_FONT_SIZE")
-        (s-concat " " (getenv "EMACS_FONT_SIZE"))
-      (cond ((eq font 'iosevka)
-             (cond ((and (>= (my/screen-height) 1440) (>= (my/screen-width) 2560)) " 15")
-                   ((and (>= (my/screen-height) 1080) (>= (my/screen-width) 1920)) " 12")
-                   ((and (>= (my/screen-height) 1050) (>= (my/screen-width) 1680)) " 19")
-                   ((and (>= (my/screen-height) 1028) (>= (my/screen-width) 1680)) " 6")
-                   (t " 16")))
-            (t " 16"))))
+    (cond ((eq font 'iosevka)
+           (cond ((and (>= (my/screen-height) 1440) (>= (my/screen-width) 2560)) " 15")
+                 ((and (>= (my/screen-height) 1080) (>= (my/screen-width) 1920)) " 12")
+                 ((and (>= (my/screen-height) 1050) (>= (my/screen-width) 1680)) " 19")
+                 ((and (>= (my/screen-height) 1028) (>= (my/screen-width) 1680)) " 6")
+                 (t " 16")))
+          (t " 16")))
 
   (defun my/find-font ()
-    (let* (
-           (liberation "Liberation Mono")
-           (iosevka "Iosevka Fixed")
+    (let* ((iosevka "Iosevka Fixed")
            (ubuntu "Ubuntu Mono")
            (consolas "Consolas")
-           )
+           (liberation "Liberation Mono"))
       (cond
-       ((my/font-exists? liberation) (s-concat liberation (my/font-size 'liberation)))
        ((my/font-exists? iosevka) (s-concat iosevka (my/font-size 'iosevka)))
        ((my/font-exists? ubuntu) (s-concat ubuntu (my/font-size 'ubuntu)))
        ((my/font-exists? consolas) (s-concat consolas (my/font-size 'consolas)))
-
+       ((my/font-exists? liberation) (s-concat liberation (my/font-size 'liberation)))
        (t ""))))
 
   (defun my/set-font (font frame)
@@ -460,8 +483,7 @@
   (message "Screen width: %s, height: %s" (my/screen-width) (my/screen-height))
   (message "Current font: %s" (my/current-font)))
 
-(defun my/setup/theme ()
-  (message "Configuring x11 theme")
+(defun my/setup/theme-backup ()
   (load-theme 'solarized-dark t)
 
   (my/setup/mode-line
@@ -481,7 +503,33 @@
   (set-face-foreground 'region nil)
 
   ;; Set region background highlight color
-  (set-face-background 'region "DarkSlateGray"))
+  (set-face-background 'region "DarkSlateGray")
+  )
+
+(defun my/setup/theme ()
+  (message "Configuring x11 theme")
+
+  (use-package doom-modeline
+    :init
+    (doom-modeline-mode 1)
+    :custom ((doom-modeline-height 25)
+             (doom-modeline-buffer-file-name-style 'file-name)))
+
+  (use-package doom-themes
+    :init
+    (load-theme 'doom-solarized-dark t)
+    (doom-themes-neotree-config)
+    )
+
+  (use-package doom-themes
+    :init
+    (load-theme 'doom-one t)
+    (doom-themes-neotree-config)
+    )
+
+  (use-package rainbow-delimiters
+    :hook (prog-mode . rainbow-delimiters-mode))
+  )
 
 (defun my/setup/theme-console ()
   (message "Configuring terminal theme")
@@ -547,7 +595,9 @@
                   global-auto-revert-mode
                   delete-selection-mode
                   ;; Turn on image viewing
-                  auto-image-file-mode))
+                  auto-image-file-mode
+                  ;; Save the last cursor place in a file
+                  save-place-mode))
 
   ;; Prevent add tabs when indent of text was used.
   (setq-default indent-tabs-mode nil))
@@ -555,6 +605,16 @@
 (defun my/map-terminal-key (key)
   "Map KEY from escape sequence \"\e[emacs-KEY\."
   (define-key function-key-map (concat "\e[emacs-" key) (kbd key)))
+
+(defun duplicate-line()
+  (interactive)
+  (move-beginning-of-line 1)
+  (kill-line)
+  (yank)
+  (open-line 1)
+  (next-line 1)
+  (yank)
+  )
 
 (defun my/setup/keys ()
   (defun my/kill-back-to-indentation ()
@@ -639,12 +699,14 @@
   (global-set-key [(control ?=)] 'highlight-symbol-next)
   (global-set-key [(control ?-)] 'highlight-symbol-prev)
   (global-set-key [(control meta backspace)] 'my/kill-back-to-indentation)
-  (global-set-key [enter] 'newline-and-indent)
+  ;;(global-set-key [enter] 'newline-and-indent)
 
-  (global-set-key [(meta ?x)] 'helm-M-x)
+  ;; (global-set-key [(meta ?x)] 'helm-M-x)
+  (global-set-key [(meta ?x)] 'counsel-M-x)
   (global-set-key [(meta ?y)] 'helm-show-kill-ring)
   (global-set-key [(control ?x) ?b] 'helm-buffers-list)
   (global-set-key [(meta ?s)] 'helm-occur)
+
   ;; (global-set-key [(control ?x) ?f] 'helm-locate)
   ;; (global-set-key [(control ?x) (control ?f)] 'helm-find-files)
   ;; (global-set-key [(control ?.)] 'helm-gtags-find-tag)
@@ -658,10 +720,10 @@
   ;; enable this if you want `swiper' to use it
   (setq search-default-mode #'char-fold-to-regexp)
   (global-set-key "\C-s" 'swiper-helm)
+
   ;; (global-set-key (kbd "C-c C-r") 'ivy-resume)
   ;; (global-set-key (kbd "<f6>") 'ivy-resume)
-  (global-set-key (kbd "M-x") 'counsel-M-x)
-  (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+  ;; (global-set-key (kbd "M-x") 'counsel-M-x)
   (global-set-key (kbd "<f1> f") 'counsel-describe-function)
   (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
   (global-set-key (kbd "<f1> o") 'counsel-describe-symbol)
@@ -670,12 +732,14 @@
   (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
   ;; (global-set-key (kbd "C-c g") 'counsel-git)
   ;; (global-set-key (kbd "C-c j") 'counsel-git-grep)
-  (global-set-key (kbd "C-c a") 'counsel-ag)
-  (global-set-key (kbd "C-c f") 'counsel-locate) ;; sudo updatedb before use it
+  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  (global-set-key (kbd "C-x C-g") 'counsel-ag)
+  (global-set-key (kbd "C-x C-l") 'counsel-locate) ;; sudo updatedb before use it
   ;; (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
   ;; (define-key minibuffer-local-map (kbd "C-r") 'counsel-minibuffer-history)
 
-  ;; (global-set-key [(control ?c) ?n ?t] 'neotree-toggle)
+  (global-set-key [(control meta ?b)] 'neotree-toggle)
+  (global-set-key [(control meta ?v)] 'neotree-stretch-toggle)
   ;; (global-set-key [(control ?c) ?n ?r] 'neotree-rename-node)
   ;; (global-set-key [(control ?c) ?n ?d] 'neotree-delete-node)
   ;; (global-set-key [(control ?c) ?n ?n] 'neotree-create-node)
@@ -687,6 +751,11 @@
   (global-set-key [(control ?c) ?m ?p] 'mc/mark-previous-like-this)
   (global-set-key [(control ?c) ?m ?x] 'mc/mark-lines)
   (global-set-key [(control return)] 'company-complete)
+
+  (global-set-key [(control ?')] 'text-scale-increase)
+  (global-set-key [(control ?\;)] 'text-scale-decrease)
+
+  (global-set-key [(control ?q)] 'imenu)
 
   (with-system darwin
     (setq mac-option-key-is-meta nil)
@@ -704,8 +773,9 @@
                         "C-M-p"))
       (my/map-terminal-key sequence)))
 
+  (global-set-key [(control meta down)] 'duplicate-line)
+
   ;; (global-set-key [(control return)] 'helm-company))
-  ;; (global-unset-key [(control ?c) ?c])
   )
 
 (defun my/setup/c++ ()
@@ -769,7 +839,7 @@
     (switch-to-buffer-other-window "*compilation*"))
 
   (defun my/setup/c++/form-compilation-command (options)
-    (-let* ((compiler "clang++")
+    (-let* ((compiler "CPLUS_INCLUDE_PATH=/usr/local/opt/llvm/include/c++/v1:/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/include LIBRARY_PATH=$LIBRARY_PATH:/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/usr/lib clang++")
             ;;(compiler (getenv "CXX"))
             (standard "-std=c++17")
             ;;(command (format "%s %s %s %s && time ./a.out"
@@ -809,7 +879,7 @@
                      "-Wdouble-promotion"
                      "-pedantic-errors"
                      "-pedantic"
-                     "-Wold-style-cast"
+                     ;;"-Wold-style-cast"
                      "-Wextra"
                      "-ansi"
                      "-Weffc++"
@@ -974,7 +1044,9 @@
       (let ((buffer-read-only nil))
         (ansi-color-apply-on-region (point-min) (point-max))))
 
-    (add-hook 'find-file-hook 'my/setup/encodings)
+    ;; (add-hook 'find-file-hook 'my/setup/encodings)
+
+    (my/setup/encodings)
 
     (with-sirena-project
       (setq tooltip-hide-delay 2)
@@ -1059,35 +1131,36 @@
   (add-hook 'c-mode-common-hook 'my/sirena/hook)
   (add-hook 'c++-mode-common-hook 'my/sirena/hook)
 
-  (add-hook 'after-init-hook 'my/c-mode-file-extensions-hook))
+  (add-hook 'after-init-hook 'my/c-mode-file-extensions-hook)
+
+  ;; (defun flymake-clang-c++-init ()
+  ;;   (let* ((a1 '("-fsyntax-only" "-fno-color-diagnostics" "--std=c++11" "-fPIC"))
+  ;;          (a2 (get-project-include-path))
+  ;;          (a3 (list (flymake-init-create-temp-buffer-copy 'flymake-create-temp-inplace))))
+  ;;     (let ((args (apply 'append `(,a1 ,a2 ,a3))))
+  ;;       (list "clang++" args))))
+
+  ;; (defun flymake-clang-c++-load ()
+  ;;   (interactive)
+  ;;   (unless (eq buffer-file-name nil)
+  ;;     (add-to-list 'flymake-allowed-file-name-masks
+  ;;                  '("\\.cpp\\'" flymake-clang-c++-init))
+  ;;     (add-to-list 'flymake-allowed-file-name-masks
+  ;;                  '("\\.cc\\'" flymake-clang-c++-init))
+  ;;     (add-to-list 'flymake-allowed-file-name-masks
+  ;;                  '("\\.h\\'" flymake-clang-c++-init))
+  ;;     (add-to-list 'flymake-allowed-file-name-masks
+  ;;                  '("\\.hpp\\'" flymake-clang-c++-init)))
+  ;;   (flymake-mode t))
+
+  ;; (defun flymake-mode-enable ()
+  ;;   (provide 'flymake-clang-c++)
+  ;;   (flymake-mode 1)
+  ;;   )
+)
 
 (defun my/setup/python ()
-  (use-package company
-    :after lsp-mode
-    :hook (lsp-mode . company-mode))
-
-  (use-package python-mode
-    :ensure t
-    :hook (python-mode . lsp-deferred)
-    :hook (python-mode . flycheck-mode)
-    :custom
-      (flycheck-add-next-checker 'python-pylint 'python-mypy 'python-flake8 'lsp))
-      ;;(setq python-shell-interpreter "python3")))
-
-  (use-package pyvenv
-    :config
-    (pyvenv-mode 1))
-
-  ;; (global-set-key [(control ?x) ?m] 'python-shell-send-buffer)
-
-  ;; pip3 install --upgrade pip
-  ;; pip3 install --user python-language-server[all]
-  ;; pip3 install --user python-lsp-server
-  ;; export PATH=$PATH:/home/idfumg/.local/bin
-  ;; pylint --generate-rcfile > .pylintrc
-  ;; pylsp # check if pylsp server is available
-
-  ;; (setq python-shell-interpreter "python3")
+  (setq python-shell-interpreter "python3")
   ;; (add-hook 'python-mode-hook
   ;;           (lambda()
   ;;             (run-python "/usr/bin/python")))
@@ -1116,8 +1189,8 @@
 
 (defun my/setup/command-history ()
   (setq-default savehist-additional-variables '(search-ring regexp-search-ring)
-                savehist-file "~/.emacs.d/savehist"
-                save-place t)
+                savehist-file "~/.emacs.d/savehist")
+  (setq history-length 25)
   (savehist-mode t))
 
 (defun my/setup/highlight ()
@@ -1142,7 +1215,41 @@
     (symon-mode))
 
   ;;(add-hook 'after-init-hook 'my/setup/system-monitor-hook)
-  )
+)
+
+;; Move a line or a text region
+(defun move-text-internal (arg)
+    (cond
+     ((and mark-active transient-mark-mode)
+      (if (> (point) (mark))
+          (exchange-point-and-mark))
+      (let ((column (current-column))
+            (text (delete-and-extract-region (point) (mark))))
+        (forward-line arg)
+        (move-to-column column t)
+        (set-mark (point))
+        (insert text)
+        (exchange-point-and-mark)
+        (setq deactivate-mark nil)))
+     (t
+      (beginning-of-line)
+      (when (or (> arg 0) (not (bobp)))
+        (forward-line)
+        (when (or (< arg 0) (not (eobp)))
+          (transpose-lines arg))
+        (forward-line -1)))))
+
+(defun move-text-down (arg)
+  "Move region (transient-mark-mode active) or current line
+  arg lines down."
+  (interactive "*p")
+  (move-text-internal arg))
+
+(defun move-text-up (arg)
+  "Move region (transient-mark-mode active) or current line
+  arg lines up."
+  (interactive "*p")
+  (move-text-internal (- arg)))
 
 (defun my/setup/misc ()
   (setq tab-always-indent 'complete)
@@ -1213,9 +1320,16 @@
     (setq mac-command-modifier 'meta))
 
   (setq x-select-enable-clipboard t)
+  (setq use-dialog-box nil)
 
   ;; startup Emacs in the fullscreen
-  (add-to-list 'default-frame-alist '(fullscreen . maximized)))
+  (add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+  (global-set-key [\M-up] 'move-text-up)
+  (global-set-key [\M-down] 'move-text-down)
+
+  (setq global-auto-revert-non-file-buffers t)
+)
 
 (defun my/setup/helm ()
   (defun my/setup/helm-hook ()
@@ -1225,13 +1339,34 @@
     (setq helm-locate-fuzzy-match t)
     (helm-mode t)
 
+    (setq
+     helm-split-window-in-side-p           t
+                                        ; open helm buffer inside current window,
+                                        ; not occupy whole other window
+     helm-move-to-line-cycle-in-source     t
+                                        ; move to end or beginning of source when
+                                        ; reaching top or bottom of source.
+     helm-ff-search-library-in-sexp        t
+                                        ; search for library in `require' and `declare-function' sexp.
+     helm-scroll-amount                    8
+                                        ; scroll 8 lines other window using M-<next>/M-<prior>
+     helm-ff-file-name-history-use-recentf t
+     ;; Allow fuzzy matches in helm semantic
+     helm-semantic-fuzzy-match t
+     helm-imenu-fuzzy-match    t)
+
+    ;; Have helm automaticaly resize the window
+    (helm-autoresize-mode 1)
+    (setq rtags-use-helm t)
+
     ;; (advice-add 'helm-ff-filter-candidate-one-by-one
     ;;             :around (lambda (fcn file)
     ;;                       (unless (string-match "\\.*\\.o$" file)
     ;;                         (funcall fcn file))))
     )
 
-  (add-hook 'after-init-hook 'my/setup/helm-hook))
+  (add-hook 'after-init-hook 'my/setup/helm-hook)
+)
 
 (defun my/setup/neotree ()
   (defun my/setup/neotree-hook ()
@@ -1477,8 +1612,8 @@
         ('ReplaceInFile (call-interactively 'my/replace-regexp-in-file))
         ('ReplaceInFiles (call-interactively 'my/replace-regexp-in-files))
         ('RecompileEmacsFiles 'my/compile/byte-recompile-init-files)
-        ('JsonBeautify (call-interactively 'my/json/beautify))
-        ('XmlBeautify (call-interactively 'my/xml/beautify))
+        ('JsonBeautify (call-interactively 'my/json/prettify))
+        ('XmlBeautify (call-interactively 'my/xml/prettify))
         ('ExternalIP (my/get-external-ip))
         ('ShortenUrl (call-interactively 'my/shorten-url))
         ('FilterBufferContents (call-interactively 'my/filter-buffer-contents))
@@ -1511,11 +1646,170 @@
 
   (add-hook 'elixir-mode-hook 'my/setup/elixir-hook))
 
+(defun my/setup/golang ()
+  """
+  https://geeksocket.in/posts/emacs-lsp-go/
+  """
+  ;; Company mode
+  (setq company-idle-delay 0)
+  (setq company-minimum-prefix-length 1)
+
+  (defun my-go-mode-hook ()
+    (add-hook 'before-save-hook 'gofmt-before-save)
+    (setq tab-width 4 indent-tabs-mode 1))
+  (add-hook 'go-mode-hook 'my-go-mode-hook)
+  )
+
+(defun my/setup/copilot ()
+  ;; https://robert.kra.hn/posts/2023-02-22-copilot-emacs-setup/
+
+  (use-package copilot
+    :load-path (lambda () (expand-file-name "copilot.el" user-emacs-directory))
+    ;; don't show in mode line
+    :diminish)
+
+  ;; (use-package copilot
+  ;;   :quelpa (copilot :fetcher github
+  ;;                    :repo "zerolfx/copilot.el"
+  ;;                    :branch "main"
+  ;;                    :files ("dist" "*.el")))
+
+  (defun rk/no-copilot-mode ()
+    "Helper for `rk/no-copilot-modes'."
+    (copilot-mode -1))
+
+  (defvar rk/no-copilot-modes '(shell-mode
+                                inferior-python-mode
+                                eshell-mode
+                                term-mode
+                                vterm-mode
+                                comint-mode
+                                compilation-mode
+                                debugger-mode
+                                dired-mode-hook
+                                compilation-mode-hook
+                                flutter-mode-hook
+                                minibuffer-mode-hook)
+    "Modes in which copilot is inconvenient.")
+
+  (defun rk/copilot-disable-predicate ()
+    "When copilot should not automatically show completions."
+    (or rk/copilot-manual-mode
+        (member major-mode rk/no-copilot-modes)
+        (company--active-p)))
+
+  (add-to-list 'copilot-disable-predicates #'rk/copilot-disable-predicate)
+
+  (defvar rk/copilot-manual-mode nil
+    "When `t' will only show completions when manually triggered, e.g. via M-C-<return>.")
+
+  (defun rk/copilot-change-activation ()
+    "Switch between three activation modes:
+- automatic: copilot will automatically overlay completions
+- manual: you need to press a key (M-C-<return>) to trigger completions
+- off: copilot is completely disabled."
+    (interactive)
+    (if (and copilot-mode rk/copilot-manual-mode)
+        (progn
+          (message "deactivating copilot")
+          (global-copilot-mode -1)
+          (setq rk/copilot-manual-mode nil))
+      (if copilot-mode
+          (progn
+            (message "activating copilot manual mode")
+            (setq rk/copilot-manual-mode t))
+        (message "activating copilot mode")
+        (global-copilot-mode))))
+
+  (define-key global-map (kbd "M-C-<escape>") #'rk/copilot-change-activation)
+
+  ;; M-C-<escape> will now cycle between three states automatic, manual and off.
+
+  (defun rk/copilot-complete-or-accept ()
+    "Command that either triggers a completion or accepts one if one
+is available. Useful if you tend to hammer your keys like I do."
+    (interactive)
+    (if (copilot--overlay-visible)
+        (progn
+          (copilot-accept-completion)
+          (open-line 1)
+          (next-line))
+      (copilot-complete)))
+
+  (define-key copilot-mode-map (kbd "M-C-<next>") #'copilot-next-completion)
+  (define-key copilot-mode-map (kbd "M-C-<prior>") #'copilot-previous-completion)
+  (define-key copilot-mode-map (kbd "M-C-<right>") #'copilot-accept-completion-by-word)
+  (define-key copilot-mode-map (kbd "M-C-<down>") #'copilot-accept-completion-by-line)
+  (define-key global-map (kbd "M-C-<return>") #'rk/copilot-complete-or-accept)
+
+  (defun rk/copilot-tab ()
+    "Tab command that will complet with copilot if a completion is
+available. Otherwise will try company, yasnippet or normal
+tab-indent."
+    (interactive)
+    (or (copilot-accept-completion)
+        ;;(company-yasnippet-or-completion)
+        (indent-for-tab-command)))
+
+  (define-key global-map (kbd "<tab>") #'rk/copilot-tab)
+
+  (defun rk/copilot-quit ()
+    "Run `copilot-clear-overlay' or `keyboard-quit'. If copilot is
+cleared, make sure the overlay doesn't come back too soon."
+    (interactive)
+    (condition-case err
+        (when copilot--overlay
+          (lexical-let ((pre-copilot-disable-predicates copilot-disable-predicates))
+            (setq copilot-disable-predicates (list (lambda () t)))
+            (copilot-clear-overlay)
+            (run-with-idle-timer
+             1.0
+             nil
+             (lambda ()
+               (setq copilot-disable-predicates pre-copilot-disable-predicates)))))
+      (error handler)))
+
+  (advice-add 'keyboard-quit :before #'rk/copilot-quit)
+  )
+
+(defun my/setup/lsp ()
+  (add-hook 'c-mode-common-hook #'lsp-deferred)
+  (add-hook 'c++-mode-common-hook #'lsp-deferred)
+
+  ;; Go - lsp-mode
+  ;; Set up before-save hooks to format buffer and add/delete imports.
+  (defun lsp-go-install-save-hooks ()
+    (add-hook 'before-save-hook #'lsp-format-buffer t t)
+    (add-hook 'before-save-hook #'lsp-organize-imports t t))
+  (add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
+  (add-hook 'go-mode-hook #'lsp-deferred)
+
+  (add-hook 'python-mode-hook #'lsp-deferred)
+  (add-hook 'js-mode-hook #'lsp-deferred)
+  (add-hook 'javascript-mode-hook #'lsp-deferred)
+  (add-hook 'rust-mode-hook #'lsp-deferred)
+
+  (use-package lsp-mode
+    :commands
+    (lsp lsp-deffered)
+    :config
+    (lsp-enable-which-key-integration t))
+)
+
+(defun my/setup/flycheck ()
+  (add-hook 'c-mode-common-hook 'flycheck-mode)
+  (add-hook 'c++-mode-common-hook 'flycheck-mode)
+  (add-hook 'python-mode-common-hook 'flycheck-mode)
+  (add-hook 'go-mode-common-hook 'flycheck-mode)
+  (add-hook 'js-mode-hook 'flycheck-mode)
+  (add-hook 'rust-mode-hook 'flycheck-mode)
+)
+
 (defun my/setup/doom-modeline ()
   (doom-modeline-mode 1)
-  (setq doom-modeline-height 1)
+  (setq doom-modeline-height 15)
   (setq doom-modeline-buffer-file-name-style 'file-name)
-  (setq doom-modeline-icon nil)
+  ;; (setq doom-modeline-icon nil)
   (setq doom-modeline-major-mode-icon t)
   (setq doom-modeline-buffer-modification-icon t)
   (setq doom-modeline-enable-word-count t)
@@ -1540,6 +1834,18 @@
   (setq doom-modeline-env-elixir-executable "iex")
   (setq doom-modeline-env-rust-executable "rustc"))
 
+(defun my/setup/row-numbers ()
+  ;; column and row numbers snippet
+  (column-number-mode)
+  (global-display-line-numbers-mode 1)
+
+  (dolist (mode '(org-mode-hook
+                  term-mode-hook
+                  shell-mode-hook
+                  eshell-mode-hook))
+    (add-hook mode (lambda () (display-line-numbers-mode 0))))
+  )
+
 (defun main ()
   (my/setup/packages)
 
@@ -1554,6 +1860,7 @@
   (my/setup/font)
 
   (with-x11-mode
+   ;; (my/setup/theme-backup)
    (my/setup/theme))
 
   (with-terminal-mode
@@ -1563,11 +1870,10 @@
    (defun track-mouse (e))
    (setq mouse-sel-mode t))
 
-  (my/setup/doom-modeline)
-
+  ;; (my/setup/doom-modeline)
   (my/setup/encodings)
   (my/setup/c++)
-  ;;(my/setup/python)
+  (my/setup/python)
   (my/setup/browser)
   (my/setup/org)
   (my/setup/command-history)
@@ -1587,7 +1893,13 @@
   (my/setup/locate)
   (my/setup/lua)
   (my/setup/popup)
-  (my/setup/elixir))
+  (my/setup/elixir)
+  (my/setup/golang)
+  (my/setup/copilot)
+  (my/setup/lsp)
+  (my/setup/flycheck)
+  (my/setup/row-numbers)
+)
 
 (main)
 
@@ -1623,7 +1935,7 @@
     (message "Done.")
     (cd default-directory-saved)))
 
-(defun my/json/beautify (start end)
+(defun my/json/prettify (start end)
   (interactive "r")
   (shell-command-on-region start
                            end
@@ -1631,7 +1943,7 @@
                            (current-buffer)
                            t))
 
-(defun my/xml/beautify (start end)
+(defun my/xml/prettify (start end)
   (interactive "r")
   (shell-command-on-region start
                            end
@@ -1855,7 +2167,7 @@
 
 (defun my/kill-line ()
   (interactive)
-  (kill-line 1)
+  (kill-whole-line 1)
   (when kill-ring
     (setq kill-ring (cdr kill-ring))))
 
@@ -1892,9 +2204,9 @@
    '("0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default))
  '(ivy-mode t)
  '(package-selected-packages
-   '(pylint python pyvenv flycheck-pycheckers flycheck-cython flycheck lsp-mode python-mode swiper-helm counsel swiper ivy use-package
-            (doom-modeline-mode 1)
-            doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag)))
+   '(rainbow-delimiters js2-mode helpful helm-fd flycheck dap-mode helm-lsp help-lsp lsp-treemacs company-mode editorconfig lsp-ui lsp-mode go-mode swiper-helm counsel swiper ivy use-package
+                        (doom-modeline-mode 1)
+                        doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -1913,3 +2225,26 @@
 ;; alias la ls -A $*
 ;; alias ll ls -alF $*
 ;; alias ls ls --color=auto $*
+
+(add-to-list 'image-types 'svg)
+
+
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :config
+  (setq which-key-idle-delay 1))
+
+(use-package ivy-rich
+  :init
+  (ivy-rich-mode 1))
+
+(use-package helpful
+  :custom
+  (counsel-describe-function-function #'helpful-callable)
+  (counsel-describe-variable-function #'helpful-variable)
+  :bind
+  ([remap describe-function] . counsel-describe-function)
+  ([remap describe-command] . helpful-command)
+  ([remap describe-variable] . counsel-describe-variable)
+  ([remap describe-key] . helpful-key))
