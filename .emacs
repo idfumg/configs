@@ -137,7 +137,7 @@
   (add-to-list 'load-path "~/.emacs.d/packages")
   (require 's) ;; https://github.com/magnars/s.el
   (require 'load-env-vars) ;; https://github.com/diasjorge/emacs-load-env-vars/blob/master/load-env-vars.el
-  (require 'copilot) ;; https://github.com/zerolfx/copilot.el
+  ;; (require 'copilot) ;; https://github.com/zerolfx/copilot.el
 
   (package-initialize)
 
@@ -167,6 +167,9 @@
                     ;; python
                     anaconda-mode
                     company-anaconda
+                    pyvenv
+                    blacken
+                    python-mode
 
                     ;; highlight word
                     highlight-symbol
@@ -272,6 +275,7 @@
                     editorconfig
 
                     flycheck
+                    flycheck-golangci-lint
 
                     ;; Should be called at the first time after installation
                     ;; M-x all-the-icons-install-fonts
@@ -282,10 +286,13 @@
                     ;; ui improvements
                     ivy
                     which-key
+                    which-func
                     ivy-rich
                     helpful
 
                     js2-mode
+
+                    drag-stuff
 
                     )))
 
@@ -461,25 +468,32 @@
           (t " 16")))
 
   (defun my/find-font ()
-    (let* ((iosevka "Iosevka Fixed")
+    ;; https://fonts.google.com/specimen/Source+Code+Pro
+    ;; https://fonts.google.com/specimen/JetBrains+Mono?query=jetbrains
+    (let* (
+           (jbm "JetBrainsMono Nerd Font")
+           (scp "Source Code Pro")
+           (iosevka "Iosevka Fixed")
            (ubuntu "Ubuntu Mono")
            (consolas "Consolas")
            (liberation "Liberation Mono"))
       (cond
+       ((my/font-exists? jbm) (s-concat jbm (my/font-size 'jbm)))
+       ((my/font-exists? scp) (s-concat scp (my/font-size 'scp)))
        ((my/font-exists? iosevka) (s-concat iosevka (my/font-size 'iosevka)))
        ((my/font-exists? ubuntu) (s-concat ubuntu (my/font-size 'ubuntu)))
        ((my/font-exists? consolas) (s-concat consolas (my/font-size 'consolas)))
        ((my/font-exists? liberation) (s-concat liberation (my/font-size 'liberation)))
        (t ""))))
 
-  (defun my/set-font (font frame)
+  (defun my/set-font-helper (font frame)
     (set-frame-parameter frame 'font font))
 
-  (let* ((font (my/find-font)))
-;;    (set-default-font font)
-    (my/set-font font nil)
-    (push (lambda (frame) (my/set-font font frame)) after-make-frame-functions))
+  (defun my/set-font (font)
+    (my/set-font-helper font nil)
+    (push (lambda (frame) (my/set-font-helper font frame)) after-make-frame-functions))
 
+  (my/set-font (my/find-font))
   (message "Screen width: %s, height: %s" (my/screen-width) (my/screen-height))
   (message "Current font: %s" (my/current-font)))
 
@@ -527,8 +541,8 @@
     (doom-themes-neotree-config)
     )
 
-  (use-package rainbow-delimiters
-    :hook (prog-mode . rainbow-delimiters-mode))
+  ;; (use-package rainbow-delimiters
+    ;; :hook (prog-mode . rainbow-delimiters-mode))
   )
 
 (defun my/setup/theme-console ()
@@ -626,82 +640,50 @@
   (global-unset-key [(control ?v)])
   (global-unset-key [(meta ?v)])
 
+  ;; kill ring
   (global-set-key [(meta ?w)] 'kill-ring-save)
-  (global-set-key [(meta ?ц)] 'kill-ring-save)
-
   (global-set-key [(control ?y)] 'yank)
-  (global-set-key [(control ?н)] 'yank)
 
-  (global-set-key [(meta ?k)] 'my/kill-sentence)
-  (global-set-key [(meta ?л)] 'my/kill-sentence)
-
-  (global-set-key [(control ?d)] 'delete-forward-char)
-  (global-set-key [(control ?в)] 'delete-forward-char)
-
+  ;; killing stuff
   (global-set-key [(meta ?d)] 'my/kill-word)
-  (global-set-key [(meta ?в)] 'my/kill-word)
-
+  (global-set-key [(control ?k)] 'my/kill-line)
+  (global-set-key [(meta ?k)] 'my/kill-sentence)
+  (global-set-key [(control ?d)] 'delete-forward-char)
+  (global-set-key [(backspace)] 'delete-backward-char)
   (global-set-key [(control backspace)] 'my/backward-kill-word)
   (global-set-key [(meta backspace)] 'my/backward-kill-word)
+  (global-set-key [(control meta backspace)] 'my/kill-back-to-indentation)
 
-  (global-set-key [(control ?k)] 'my/kill-line)
-  (global-set-key [(control ?л)] 'my/kill-line)
+  ;; moving and duplicating lines
+  (global-set-key [(control meta down)] 'duplicate-line)
+  (global-set-key [\M-up] 'drag-stuff-up)
+  (global-set-key [\M-down] 'drag-stuff-down)
 
-  (global-set-key [(control meta ?e)] 'end-of-defun)
-  (global-set-key [(control meta ?у)] 'end-of-defun)
-
-  (global-set-key [(control meta ?f)] 'forward-sexp)
-  (global-set-key [(control meta ?а)] 'forward-sexp)
-
-  (global-set-key [(control meta ?b)] 'backward-sexp)
-  (global-set-key [(control meta ?и)] 'backward-sexp)
-
+  ;; moving cursor
+  (global-set-key [(control meta ?e)] 'forward-sentence)
+  (global-set-key [(control meta ?a)] 'backward-sentence)
   (global-set-key [(control ?p)] 'previous-line)
-  (global-set-key [(control ?з)] 'previous-line)
-
   (global-set-key [(control ?n)] 'next-line)
-  (global-set-key [(control ?т)] 'next-line)
-
-  (global-set-key [(meta ?p)] 'scroll-down-line)
-  (global-set-key [(meta ?з)] 'scroll-down-line)
-
-  (global-set-key [(meta ?n)] 'scroll-up-line)
-  (global-set-key [(meta ?т)] 'scroll-up-line)
-
-  (global-set-key [(control meta ?p)] 'scroll-down-command)
-  (global-set-key [(control meta ?з)] 'scroll-down-command)
-
-  (global-set-key [(control meta ?n)] 'scroll-up-command)
-  (global-set-key [(control meta ?т)] 'scroll-up-command)
-
   (global-set-key [(control ?b)] 'backward-char)
-  (global-set-key [(control ?и)] 'backward-char)
-
-  (global-set-key [(meta ?и)] 'backward-word)
-  (global-set-key [(meta ?b)] 'backward-word)
-
   (global-set-key [(control ?f)] 'forward-char)
-  (global-set-key [(control ?а)] 'forward-char)
-
+  (global-set-key [(meta ?b)] 'backward-word)
   (global-set-key [(meta ?f)] 'forward-word)
-  (global-set-key [(meta ?а)] 'forward-word)
-
   (global-set-key [(control ?a)] 'back-to-indentation)
-  (global-set-key [(control ?ф)] 'back-to-indentation)
-
   (global-set-key [(control ?e)] 'move-end-of-line)
-  (global-set-key [(control ?у)] 'move-end-of-line)
-
   (global-set-key [(meta ?g)] 'goto-line)
-  (global-set-key [(meta ?п)] 'goto-line)
 
+  ;; scrolling
+  (global-set-key [(meta ?p)] 'scroll-down-line)
+  (global-set-key [(meta ?n)] 'scroll-up-line)
+  (global-set-key [(control meta ?p)] 'scroll-down-command)
+  (global-set-key [(control meta ?n)] 'scroll-up-command)
+
+  ;; highlighting
   (global-set-key [(meta ?-)] 'highlight-symbol-at-point)
   (global-set-key [(control ?=)] 'highlight-symbol-next)
   (global-set-key [(control ?-)] 'highlight-symbol-prev)
-  (global-set-key [(control meta backspace)] 'my/kill-back-to-indentation)
-  ;;(global-set-key [enter] 'newline-and-indent)
 
-  ;; (global-set-key [(meta ?x)] 'helm-M-x)
+  ;; helm buffers and stuff
   (global-set-key [(meta ?x)] 'counsel-M-x)
   (global-set-key [(meta ?y)] 'helm-show-kill-ring)
   (global-set-key [(control ?x) ?b] 'helm-buffers-list)
@@ -752,6 +734,8 @@
   (global-set-key [(control ?c) ?m ?x] 'mc/mark-lines)
   (global-set-key [(control return)] 'company-complete)
 
+  ;; text scaling
+  (setq text-scale-mode-step 1.1)
   (global-set-key [(control ?')] 'text-scale-increase)
   (global-set-key [(control ?\;)] 'text-scale-decrease)
 
@@ -773,55 +757,12 @@
                         "C-M-p"))
       (my/map-terminal-key sequence)))
 
-  (global-set-key [(control meta down)] 'duplicate-line)
-
   ;; (global-set-key [(control return)] 'helm-company))
   )
-
 (defun my/setup/c++ ()
   ;; Commands to checking the irony settings:
   ;; irony-cdb-autosetup-compile-options
   ;; irony-cdb-menu
-
-  ;; Should be sit in the project root directory.
-  ;; [.clang_complete contains]
-  ;; -std=c++14
-  ;; -Wall
-  ;; -Wextra
-  ;; -I.
-  ;; -I..
-  ;; -I/home/idfumg/work/trunk/src/
-  ;; -I/home/idfumg/work/trunk/src/rail
-  ;; -I/home/idfumg/work/trunk/src/basetables
-  ;; -I/home/idfumg/work/trunk/externallibs/boost/include
-  ;; -I/home/idfumg/work/trunk/externallibs/check/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/edilib/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/eticklib/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/jxtlib/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/libairimp/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/libcoretypes/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/libdcs/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/libjms/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/libnsi/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/librms/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/libssim/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/libtlg/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/libtypeb/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/serverlib/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/smsinfo/include
-  ;; -I/home/idfumg/work/trunk/sirenalibs/typebparser/include
-  ;; -I/oracle/product/db/precomp/public
-  ;; -I/oracle/product/db/rdbms/demo
-  ;; -I/oracle/product/db/rdbms/public
-  ;; -I/oracle/product/db/rdbms/public
-  ;; -I/usr/include
-  ;; -I/usr/include/c++/6.1.1
-  ;; -I/usr/include/c++/6.1.1/x86_64-pc-linux-gnu
-  ;; -I/usr/include/c++/6.1.1/x86_64-pc-linux-gnu/backward
-  ;; -I/usr/include/libxml2
-  ;; -I/usr/include/openssl
-  ;; -I/usr/lib/clang/3.8.1/include
-  ;; -I/usr/local/include
 
   (defun my/setup/shell-command (cmd)
     (compile cmd))
@@ -1160,7 +1101,56 @@
 )
 
 (defun my/setup/python ()
-  (setq python-shell-interpreter "python3")
+  (setq python-shell-interpreter "python3.12")
+  (add-to-list 'interpreter-mode-alist '("python3.12" . python-mode))
+  (setq py-python-command "python3.12")
+  (setq py-default-interpreter "python3.12")
+  (setq python-python-command "python3.12")
+  (setq py-shell-local-path "/usr/local/bin/python3.12" py-use-local-default t)
+  (setq python-shell-exec-path "/usr/local/bin")
+
+  (custom-set-variables
+   '(flycheck-python-flake8-executable "python3.12")
+   '(flycheck-python-pycompile-executable "python3.12")
+   '(flycheck-python-pylint-executable "python3.12")
+   '(flycheck-python-pycompile-executable "python3.12"))
+
+  ;; (add-hook 'flycheck-mode-hook #'flycheck-virtualenv-setup)
+
+  (use-package pyvenv
+    :ensure t
+    ;; :init
+    ;; (setenv "WORKON_HOME" "~/.venvs/")
+    :config
+    (pyvenv-mode t)
+
+    ;; Set correct Python interpreter
+    (setq pyvenv-post-activate-hooks
+          (list (lambda ()
+                  (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python")))))
+    (setq pyvenv-post-deactivate-hooks
+          (list (lambda ()
+                  (setq python-shell-interpreter "python3")))))
+
+  ;; (use-package blacken
+  ;;   :init
+  ;;   (setq-default blacken-fast-unsafe t)
+  ;;   (setq-default blacken-line-length 80)
+  ;;   )
+
+  (use-package python-mode
+    :hook
+    (python-mode . pyvenv-mode)
+    (python-mode . flycheck-mode)
+    (python-mode . company-mode)
+    ;;(python-mode . blacken-mode)
+    ;;(python-mode . yas-minor-mode)
+    :custom
+    ;; NOTE: Set these if Python 3 is called "python3" on your system!
+    (python-shell-interpreter "python3.12")
+    :config
+    )
+
   ;; (add-hook 'python-mode-hook
   ;;           (lambda()
   ;;             (run-python "/usr/bin/python")))
@@ -1216,40 +1206,6 @@
 
   ;;(add-hook 'after-init-hook 'my/setup/system-monitor-hook)
 )
-
-;; Move a line or a text region
-(defun move-text-internal (arg)
-    (cond
-     ((and mark-active transient-mark-mode)
-      (if (> (point) (mark))
-          (exchange-point-and-mark))
-      (let ((column (current-column))
-            (text (delete-and-extract-region (point) (mark))))
-        (forward-line arg)
-        (move-to-column column t)
-        (set-mark (point))
-        (insert text)
-        (exchange-point-and-mark)
-        (setq deactivate-mark nil)))
-     (t
-      (beginning-of-line)
-      (when (or (> arg 0) (not (bobp)))
-        (forward-line)
-        (when (or (< arg 0) (not (eobp)))
-          (transpose-lines arg))
-        (forward-line -1)))))
-
-(defun move-text-down (arg)
-  "Move region (transient-mark-mode active) or current line
-  arg lines down."
-  (interactive "*p")
-  (move-text-internal arg))
-
-(defun move-text-up (arg)
-  "Move region (transient-mark-mode active) or current line
-  arg lines up."
-  (interactive "*p")
-  (move-text-internal (- arg)))
 
 (defun my/setup/misc ()
   (setq tab-always-indent 'complete)
@@ -1324,9 +1280,6 @@
 
   ;; startup Emacs in the fullscreen
   (add-to-list 'default-frame-alist '(fullscreen . maximized))
-
-  (global-set-key [\M-up] 'move-text-up)
-  (global-set-key [\M-down] 'move-text-down)
 
   (setq global-auto-revert-non-file-buffers t)
 )
@@ -1443,9 +1396,7 @@
   (defun my/setup/eshell-hook ()
     (setq eshell-prefer-lisp-functions t)
     (local-set-key [(meta ?p)] 'eshell-previous-input)
-    (local-set-key [(meta ?з)] 'eshell-previous-input)
-    (local-set-key [(meta ?n)] 'eshell-next-input)
-    (local-set-key [(meta ?т)] 'eshell-next-input))
+    (local-set-key [(meta ?n)] 'eshell-next-input))
 
   (defun my/eshell/clear ()
     (interactive)
@@ -1790,10 +1741,16 @@ cleared, make sure the overlay doesn't come back too soon."
   (add-hook 'rust-mode-hook #'lsp-deferred)
 
   (use-package lsp-mode
-    :commands
-    (lsp lsp-deffered)
+    :ensure t
+    :commands (lsp lsp-deffered)
+    :hook ((go-mode . lsp-deferred))
     :config
-    (lsp-enable-which-key-integration t))
+    ;;(lsp-enable-which-key-integration t)
+    (setq lsp-prefer-flymake nil))
+
+  (use-package lsp-ui
+    :ensure t
+    :commands lsp-ui-mode)
 )
 
 (defun my/setup/flycheck ()
@@ -1803,6 +1760,9 @@ cleared, make sure the overlay doesn't come back too soon."
   (add-hook 'go-mode-common-hook 'flycheck-mode)
   (add-hook 'js-mode-hook 'flycheck-mode)
   (add-hook 'rust-mode-hook 'flycheck-mode)
+  (eval-after-load 'flycheck
+
+    '(add-hook 'flycheck-mode-hook #'flycheck-golangci-lint-setup))
 )
 
 (defun my/setup/doom-modeline ()
@@ -1827,7 +1787,8 @@ cleared, make sure the overlay doesn't come back too soon."
   (setq doom-modeline-env-enable-go t)
   (setq doom-modeline-env-enable-elixir t)
   (setq doom-modeline-env-enable-rust t)
-  (setq doom-modeline-env-python-executable "python3") ; or `python-shell-interpreter'
+  (setq doom-modeline-env-python-executable "python3.12") ; or `python-shell-interpreter'
+  (setq doom-modeline-python-executable "python3.12")
   (setq doom-modeline-env-ruby-executable "ruby")
   (setq doom-modeline-env-perl-executable "perl")
   (setq doom-modeline-env-go-executable "go")
@@ -1873,7 +1834,6 @@ cleared, make sure the overlay doesn't come back too soon."
   ;; (my/setup/doom-modeline)
   (my/setup/encodings)
   (my/setup/c++)
-  (my/setup/python)
   (my/setup/browser)
   (my/setup/org)
   (my/setup/command-history)
@@ -1899,6 +1859,7 @@ cleared, make sure the overlay doesn't come back too soon."
   (my/setup/lsp)
   (my/setup/flycheck)
   (my/setup/row-numbers)
+  (my/setup/python)
 )
 
 (main)
@@ -2147,29 +2108,35 @@ cleared, make sure the overlay doesn't come back too soon."
 (defun my/open-synopsis-elixir ()
   (my/open-file "~/1/github/ElixirSynopsis/learn/common/0.ex"))
 
-(defun my/kill-word ()
-  (interactive)
-  (kill-word 1)
+(defun my/pop-kill-ring ()
   (when kill-ring
-    (setq kill-ring (cdr kill-ring))))
+    (setq kill-ring (cdr kill-ring)))
+  )
 
-(defun my/backward-kill-word ()
-  (interactive)
-  (backward-kill-word 1)
-  (when kill-ring
-    (setq kill-ring (cdr kill-ring))))
+(defun my/kill-word (arg)
+  "Delete characters backward until encountering the beginning of a word.
+With argument ARG, do this that many times."
+  (interactive "p")
+  (delete-region (point) (progn (forward-word arg) (point))))
+
+(defun my/backward-kill-word (arg)
+  "Delete characters backward until encountering the beginning of a word.
+With argument ARG, do this that many times."
+  (interactive "p")
+  (delete-region (point) (progn (backward-word arg) (point))))
+
+(defun my/kill-line (arg)
+  "Delete characters backward until encountering the beginning of a word.
+With argument ARG, do this that many times."
+  (interactive "p")
+  (delete-region (line-end-position) (line-beginning-position))
+  (backward-delete-char 1)
+  (next-line))
 
 (defun my/kill-sentence ()
   (interactive)
   (kill-sentence 1)
-  (when kill-ring
-    (setq kill-ring (cdr kill-ring))))
-
-(defun my/kill-line ()
-  (interactive)
-  (kill-whole-line 1)
-  (when kill-ring
-    (setq kill-ring (cdr kill-ring))))
+  (my/pop-kill-ring))
 
 (defun my/create-scratch-buffer ()
    (interactive)
@@ -2202,11 +2169,14 @@ cleared, make sure the overlay doesn't come back too soon."
  '(counsel-mode t)
  '(custom-safe-themes
    '("0598c6a29e13e7112cfbc2f523e31927ab7dce56ebb2016b567e1eff6dc1fd4f" "8aebf25556399b58091e533e455dd50a6a9cba958cc4ebb0aab175863c25b9a4" default))
+ '(flycheck-python-flake8-executable "python3.12")
+ '(flycheck-python-pycompile-executable "python3.12")
+ '(flycheck-python-pylint-executable "python3.12")
  '(ivy-mode t)
  '(package-selected-packages
-   '(rainbow-delimiters js2-mode helpful helm-fd flycheck dap-mode helm-lsp help-lsp lsp-treemacs company-mode editorconfig lsp-ui lsp-mode go-mode swiper-helm counsel swiper ivy use-package
-                        (doom-modeline-mode 1)
-                        doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag)))
+   '(drag-stuff flycheck-golangci-lint company-lsp python-mode blacken pyvenv rainbow-delimiters js2-mode helpful helm-fd flycheck dap-mode helm-lsp help-lsp lsp-treemacs company-mode editorconfig lsp-ui lsp-mode go-mode swiper-helm counsel swiper ivy use-package
+                (doom-modeline-mode 1)
+                doom-modeline nord-theme dotenv-mode cquery company-tabnine neotree yaml-mode treemacs symon solarized-theme smooth-scrolling s-buffer request phi-search-mc mc-extras load-env-vars highlight-symbol helm-projectile helm-gtags helm-company dockerfile-mode company-statistics company-lua company-irony company-c-headers company-anaconda alchemist ag)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -2234,6 +2204,12 @@ cleared, make sure the overlay doesn't come back too soon."
   :diminish which-key-mode
   :config
   (setq which-key-idle-delay 1))
+
+(use-package which-func
+  :init (which-func-try-to-enable)
+  :diminish which-func-mode
+  :config
+  (setq which-func-mode t))
 
 (use-package ivy-rich
   :init
